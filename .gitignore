@@ -3,6 +3,8 @@ node_modules/
 dist/
 .vite/
 coverage/
+.venv-converter/
+training-data/
 
 # TypeScript incremental-build metadata
 *.tsbuildinfo
