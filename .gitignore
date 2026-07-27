@@ -3,16 +3,19 @@ node_modules/
 dist/
 .vite/
 coverage/
-.venv-converter/
+.venv*/
 training-data/
+
+# Python bytecode
+__pycache__/
+*.py[cod]
 
 # TypeScript incremental-build metadata
 *.tsbuildinfo
 
 # Local environment configuration (commit templates only)
 .env
-.env.local
-.env.*.local
+.env.*
 !.env.example
 
 # Debug logs

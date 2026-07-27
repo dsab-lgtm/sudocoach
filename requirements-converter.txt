@@ -1,0 +1,20 @@
+# Reproducible TensorFlow.js conversion stack for Python 3.11 on Apple Silicon.
+# Kept separate from the browser application's Node dependencies.
+tensorflowjs==4.17.0
+tensorflow==2.15.0
+tensorflow-macos==2.15.0
+tensorflow-decision-forests==1.8.1
+tensorflow-hub==0.15.0
+protobuf==4.25.3
+numpy==1.26.4
+keras==2.15.0
+ml-dtypes==0.2.0
+jax==0.4.23
+jaxlib==0.4.23
+flax==0.7.5
+optax==0.1.7
+orbax-checkpoint==0.3.5
+chex==0.1.85
+tensorstore==0.1.45
+scipy==1.11.4
+pandas==2.1.4
