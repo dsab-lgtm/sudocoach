@@ -18,7 +18,7 @@ export const gridFromString = (input: string): Grid => {
 export const createBoard = (givens: Grid, origin: BoardCell['origin'] = 'manual'): Board =>
   givens.map((row) => row.map((given) => ({ given, value: given, notes: [], origin: given ? origin : undefined })))
 
-export const cloneBoard = (board: Board): Board => board.map((row) => row.map((cell) => ({ ...cell, notes: [...cell.notes] })))
+export const cloneBoard = (board: Board): Board => board.map((row) => row.map((cell) => ({ ...cell, notes: [...cell.notes], assistantExcluded: [...(cell.assistantExcluded ?? [])] })))
 
 export const boardValues = (board: Board): Grid => board.map((row) => row.map((cell) => cell.value))
 export const boardGivens = (board: Board): Grid => board.map((row) => row.map((cell) => cell.given))

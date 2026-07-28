@@ -1,7 +1,7 @@
 import { cloneGrid } from './board'
 import { candidatesFor } from './candidates'
 import { validatePuzzle } from './validatePuzzle'
-import type { CellPosition, Grid } from './types'
+import type { CellPosition, Grid, SolutionStatus } from './types'
 
 const chooseCell = (grid: Grid): CellPosition | null => {
   let best: CellPosition | null = null
@@ -35,3 +35,17 @@ export const findSolutions = (grid: Grid, limit = 2): Grid[] => {
 
 export const countSolutions = (grid: Grid, limit = 2) => findSolutions(grid, limit).length
 export const solve = (grid: Grid): Grid | null => findSolutions(grid, 1)[0] ?? null
+
+export type SolutionAnalysis = {
+  status: Exclude<SolutionStatus, 'unknown'>
+  solution?: Grid
+}
+
+/** Never treats the first solution as authoritative when the puzzle is ambiguous. */
+export const analyzeSolutions = (grid: Grid): SolutionAnalysis => {
+  if (!validatePuzzle(grid).valid) return { status: 'invalid' }
+  const solutions = findSolutions(grid, 2)
+  if (!solutions.length) return { status: 'unsolvable' }
+  if (solutions.length > 1) return { status: 'ambiguous' }
+  return { status: 'unique', solution: solutions[0] }
+}

@@ -3,11 +3,15 @@ import { createRoot } from 'react-dom/client'
 import { HashRouter, Route, Routes } from 'react-router-dom'
 import { registerSW } from 'virtual:pwa-register'
 import { AppShell } from './components/AppShell'
+import { CandidateAssistantProvider } from './components/CandidateAssistantProvider'
+import { FeedbackProvider } from './components/FeedbackProvider'
 import { ThemePreferenceProvider } from './components/ThemePreferenceProvider'
 import { CameraScreen } from './screens/CameraScreen'
 import { HomeScreen } from './screens/HomeScreen'
 import { ManualEntryScreen } from './screens/ManualEntryScreen'
 import { ProcessingScreen } from './screens/ProcessingScreen'
+import { PracticeCatalogScreen } from './screens/PracticeCatalogScreen'
+import { PracticeSessionScreen } from './screens/PracticeSessionScreen'
 import { ScanReviewScreen } from './screens/ScanReviewScreen'
 import { SettingsScreen } from './screens/SettingsScreen'
 import { SolverScreen } from './screens/SolverScreen'
@@ -21,4 +25,4 @@ window.addEventListener(updateReadyEvent, () => {
   if (window.confirm('A new version of SudoCoach is ready. Update now?')) updateServiceWorker(true)
 })
 
-createRoot(document.getElementById('root')!).render(<StrictMode><ThemePreferenceProvider><HashRouter><AppShell><Routes><Route path="/" element={<HomeScreen/>}/><Route path="/camera" element={<CameraScreen/>}/><Route path="/processing" element={<ProcessingScreen/>}/><Route path="/review" element={<ScanReviewScreen/>}/><Route path="/manual" element={<ManualEntryScreen/>}/><Route path="/solve" element={<SolverScreen/>}/><Route path="/settings" element={<SettingsScreen/>}/>{import.meta.env.DEV && <Route path="/training/annotate" element={<TrainingAnnotationScreen/>}/>}</Routes></AppShell></HashRouter></ThemePreferenceProvider></StrictMode>)
+createRoot(document.getElementById('root')!).render(<StrictMode><ThemePreferenceProvider><CandidateAssistantProvider><FeedbackProvider><HashRouter><AppShell><Routes><Route path="/" element={<HomeScreen/>}/><Route path="/camera" element={<CameraScreen/>}/><Route path="/processing" element={<ProcessingScreen/>}/><Route path="/review" element={<ScanReviewScreen/>}/><Route path="/manual" element={<ManualEntryScreen/>}/><Route path="/solve" element={<SolverScreen/>}/><Route path="/practice" element={<PracticeCatalogScreen/>}/><Route path="/practice/:technique/:exerciseId" element={<PracticeSessionScreen/>}/><Route path="/settings" element={<SettingsScreen/>}/>{import.meta.env.DEV && <Route path="/training/annotate" element={<TrainingAnnotationScreen/>}/>}</Routes></AppShell></HashRouter></FeedbackProvider></CandidateAssistantProvider></ThemePreferenceProvider></StrictMode>)

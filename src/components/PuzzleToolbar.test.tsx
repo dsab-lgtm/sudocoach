@@ -4,6 +4,7 @@ import { PuzzleToolbar } from './PuzzleToolbar'
 
 const controls = () => ({
   onCheck: vi.fn(),
+  onCandidates: vi.fn(),
   onErase: vi.fn(),
   onHint: vi.fn(),
   onMore: vi.fn(),
@@ -15,7 +16,7 @@ const controls = () => ({
 describe('PuzzleToolbar', () => {
   it('exposes grouped puzzle actions and notes state through explicit callbacks', () => {
     const callbacks = controls()
-    render(<PuzzleToolbar canErase canRedo={false} canUndo notesMode onCheck={callbacks.onCheck} onErase={callbacks.onErase} onHint={callbacks.onHint} onMore={callbacks.onMore} onRedo={callbacks.onRedo} onToggleNotes={callbacks.onToggleNotes} onUndo={callbacks.onUndo}/>)
+    render(<PuzzleToolbar canErase canRedo={false} canUndo notesMode onCandidates={callbacks.onCandidates} onCheck={callbacks.onCheck} onErase={callbacks.onErase} onHint={callbacks.onHint} onMore={callbacks.onMore} onRedo={callbacks.onRedo} onToggleNotes={callbacks.onToggleNotes} onUndo={callbacks.onUndo}/>)
 
     expect(screen.getByRole('navigation', { name: 'Puzzle controls' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Notes' })).toHaveAttribute('aria-pressed', 'true')
@@ -25,6 +26,7 @@ describe('PuzzleToolbar', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Erase' }))
     fireEvent.click(screen.getByRole('button', { name: 'Undo' }))
     fireEvent.click(screen.getByRole('button', { name: 'Hint' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Candidates' }))
     fireEvent.click(screen.getByRole('button', { name: 'Check' }))
     fireEvent.click(screen.getByRole('button', { name: 'More puzzle actions' }))
 
@@ -32,6 +34,7 @@ describe('PuzzleToolbar', () => {
     expect(callbacks.onErase).toHaveBeenCalledOnce()
     expect(callbacks.onUndo).toHaveBeenCalledOnce()
     expect(callbacks.onHint).toHaveBeenCalledOnce()
+    expect(callbacks.onCandidates).toHaveBeenCalledOnce()
     expect(callbacks.onCheck).toHaveBeenCalledOnce()
     expect(callbacks.onMore).toHaveBeenCalledOnce()
   })

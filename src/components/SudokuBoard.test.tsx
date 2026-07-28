@@ -111,6 +111,18 @@ describe('SudokuBoard keyboard controls', () => {
     expect(cell(1, 1)).toHaveAccessibleName('Row 1, column 1, empty, editable, candidate values 2, 8')
   })
 
+  it('renders ephemeral feedback layers without changing gridcell identity', () => {
+    const { rerender } = render(<SudokuBoard presentation={{ ...presentation({ '0:0': { value: 4, state: { selected: true } } }), feedback: { id: 1, kind: 'value-entered', cells: [{ row: 0, col: 0 }], digits: [4] } }} interactions={interactions()}/>)
+    const target = cell(1, 1)
+    expect(target).toHaveClass('has-feedback--value-entered')
+    expect(target.querySelector('.board-value-feedback')).toHaveTextContent('4')
+
+    rerender(<SudokuBoard presentation={{ ...presentation({ '0:0': { state: { selected: true } } }), feedback: { id: 2, kind: 'candidate-removed', cells: [{ row: 0, col: 0 }], digits: [4] } }} interactions={interactions()}/>)
+    expect(cell(1, 1)).toBe(target)
+    expect(target.querySelector('.notes-feedback-removal')).toHaveTextContent('4')
+    expect(target.querySelector('.board-feedback-cue')).toHaveAttribute('aria-hidden', 'true')
+  })
+
   it('uses stable native numeric inputs without advancing focus when configured', () => {
     const controls = interactions()
     const { container } = render(<SudokuBoard presentation={presentation({ '0:0': { state: { selected: true } } })} interactions={controls} nativeNumericInput autoAdvance={false} showCandidates={false}/>)

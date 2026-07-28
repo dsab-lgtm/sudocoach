@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DIGIT_MODEL_PREPROCESSING_VERSION, isDigitModelMetadata, modelMatchesMetadata } from './modelMetadata'
+import { DIGIT_MODEL_PREPROCESSING_VERSION, isBlankAwareDigitModel, isDigitModelMetadata, modelMatchesMetadata } from './modelMetadata'
 
 const metadata = {
   schemaVersion: 1 as const,
@@ -19,5 +19,14 @@ describe('digit-model metadata', () => {
   it('checks TensorFlow input and output shapes', () => {
     expect(modelMatchesMetadata({ inputs: [{ shape: [null, 28, 28, 1] }], outputs: [{ shape: [null, 9] }] }, metadata)).toBe(true)
     expect(modelMatchesMetadata({ inputs: [{ shape: [null, 784] }], outputs: [{ shape: [null, 9] }] }, metadata)).toBe(false)
+  })
+
+  it('accepts the blank-aware schema and requires its ten-class model output', () => {
+    const blankAware = { ...metadata, schemaVersion: 2 as const, labels: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] as [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], calibration: { temperature: 1.2 } }
+    expect(isDigitModelMetadata(blankAware)).toBe(true)
+    if (!isDigitModelMetadata(blankAware)) throw new Error('Expected valid metadata')
+    expect(isBlankAwareDigitModel(blankAware)).toBe(true)
+    expect(modelMatchesMetadata({ inputs: [{ shape: [null, 28, 28, 1] }], outputs: [{ shape: [null, 10] }] }, blankAware)).toBe(true)
+    expect(modelMatchesMetadata({ inputs: [{ shape: [null, 28, 28, 1] }], outputs: [{ shape: [null, 9] }] }, blankAware)).toBe(false)
   })
 })

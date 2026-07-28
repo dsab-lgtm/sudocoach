@@ -77,9 +77,12 @@ describe('SolverScreen puzzle behavior', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Notes' }))
     fireEvent.click(screen.getByRole('button', { name: '4' }))
     expect(cell(1, 1)).toHaveAccessibleName('Row 1, column 1, empty, editable, candidate values 4')
+    expect(cell(1, 1)).toHaveClass('has-feedback--candidate-added')
 
     fireEvent.click(screen.getByRole('button', { name: '4' }))
     expect(cell(1, 1)).toHaveAccessibleName('Row 1, column 1, empty, editable')
+    expect(cell(1, 1)).toHaveClass('has-feedback--candidate-removed')
+    expect(cell(1, 1).querySelector('.notes-feedback-removal')).toHaveTextContent('4')
     expect(usePuzzleStore.getState().board[0][0].notes).toEqual([])
   })
 
@@ -87,10 +90,13 @@ describe('SolverScreen puzzle behavior', () => {
     act(() => { usePuzzleStore.getState().setPuzzle(emptyGrid()); usePuzzleStore.getState().select({ row: 0, col: 0 }) })
     renderSolver()
     fireEvent.click(screen.getByRole('button', { name: '6' }))
+    expect(cell(1, 1)).toHaveClass('has-feedback--value-entered')
     fireEvent.click(screen.getByRole('button', { name: 'Undo' }))
     expect(cell(1, 1)).toHaveAccessibleName('Row 1, column 1, empty, editable')
+    expect(cell(1, 1)).toHaveClass('has-feedback--recovered')
     fireEvent.click(screen.getByRole('button', { name: 'Redo' }))
     expect(cell(1, 1)).toHaveAccessibleName('Row 1, column 1: 6, editable')
+    expect(cell(1, 1)).toHaveClass('has-feedback--reapplied')
   })
 
   it('reports and exposes conflicting values without comparing them to the solution', () => {
@@ -103,6 +109,7 @@ describe('SolverScreen puzzle behavior', () => {
 
     expect(screen.getByRole('status')).toHaveTextContent('2 conflicting cells highlighted.')
     expect(cell(1, 1)).toHaveClass('is-conflict')
+    expect(cell(1, 1)).toHaveClass('has-feedback--diagnosis')
     expect(cell(1, 1)).toHaveAttribute('aria-invalid', 'true')
     expect(cell(1, 1)).toHaveAccessibleName('Row 1, column 1: 9, editable, conflicting')
   })

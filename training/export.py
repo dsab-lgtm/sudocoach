@@ -28,7 +28,13 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--run", required=True, type=Path)
     parser.add_argument("--experimental", action="store_true", help="Export a completed, explicitly experimental four-fold run")
+    parser.add_argument("--force-experimental", action="store_true", help="Require an explicit human override when an experimental candidate misses a safety gate")
+    parser.add_argument("--override-reason", help="Recorded reason for a forced experimental export")
     arguments = parser.parse_args()
+    if arguments.force_experimental and not arguments.experimental:
+        raise SystemExit("--force-experimental requires --experimental.")
+    if arguments.force_experimental and not arguments.override_reason:
+        raise SystemExit("--force-experimental requires --override-reason so the deployment remains traceable.")
     model = arguments.run / "model.keras"
     metadata_path = arguments.run / "metadata.json"
     if not model.exists() or not metadata_path.exists():
@@ -39,8 +45,16 @@ def main() -> None:
         if metadata.get("modelStatus") != "experimental" or len(metadata.get("crossValidation", {}).get("folds", [])) != 4:
             raise SystemExit("Experimental export requires an experimental run with four source-photo folds.")
         review_first = metrics.get("reviewFirst", {})
-        if metadata.get("preprocessingVersion") != "v2" or metrics.get("realPhotoAccuracy", 0) <= 0.22962962962962963 or review_first.get("knownClueCoverage", 0) < 0.70:
-            raise SystemExit("Refusing experimental export: v2 must beat the shipped 22.96% model and cover at least 70% of known clues for mandatory review.")
+        aggregate = metrics.get("aggregate", {})
+        blank_gate = metrics.get("blankGate", {})
+        gates_pass = metadata.get("exportEligible") and metadata.get("preprocessingVersion") == "v2" and review_first.get("acceptedAccuracy", 0) >= .90 and review_first.get("correctSuggestions", 0) > 102 and review_first.get("knownClueCoverage", 0) >= .70 and blank_gate.get("blankFalsePositiveRate", 1) <= .10 and aggregate.get("meanAccuracy", 0) >= .7851851851851852 and aggregate.get("worstAccuracy", 0) >= .50
+        if not gates_pass and not arguments.force_experimental:
+            raise SystemExit("Refusing experimental export: candidate must beat the bundled model's accepted accuracy, correct suggestions, blank false-positive rate, and source-photo fold gates.")
+        if not gates_pass:
+            metadata["manualOverride"] = {
+                "safetyGatesPassed": False,
+                "reason": arguments.override_reason,
+            }
     elif metadata.get("modelStatus") != "production" or metrics.get("realPhotoAccuracy", 0) < 0.97 or metrics.get("minimumClassRecall", 0) < 0.95:
         raise SystemExit("Refusing export: held-out real-photo metrics do not meet 97% accuracy / 95% per-class recall.")
 

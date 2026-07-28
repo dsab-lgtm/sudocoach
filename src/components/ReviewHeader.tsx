@@ -1,6 +1,7 @@
 import type { ScanDiagnostic } from '../scanner/types'
 import { BrandLogo } from './BrandLogo'
 import { IconButton } from './IconButton'
+import { InlineFeedback } from './InlineFeedback'
 
 type ReviewHeaderProps = {
   diagnostics: readonly ScanDiagnostic[]
@@ -8,7 +9,8 @@ type ReviewHeaderProps = {
   gridDetected: boolean
   noCluesDetected: boolean
   onBack: () => void
-  unresolvedCount: number
+  reviewedCount: number
+  detectedCount: number
 }
 
 function BackIcon() {
@@ -17,8 +19,8 @@ function BackIcon() {
   </svg>
 }
 
-export function ReviewHeader({ diagnostics, error, gridDetected, noCluesDetected, onBack, unresolvedCount }: ReviewHeaderProps) {
-  const message = unresolvedCount ? `${unresolvedCount} ${unresolvedCount === 1 ? 'clue needs' : 'clues need'} review.` : 'All uncertain clues are confirmed.'
+export function ReviewHeader({ diagnostics, error, gridDetected, noCluesDetected, onBack, reviewedCount, detectedCount }: ReviewHeaderProps) {
+  const message = detectedCount ? `${reviewedCount} of ${detectedCount} reviewed` : 'No scanned clues yet'
 
   return <div className="review-header">
     <div className="review-header__identity">
@@ -26,7 +28,7 @@ export function ReviewHeader({ diagnostics, error, gridDetected, noCluesDetected
       <div>
         <p className="review-header__eyebrow">Review scan</p>
         <h1>Check clues</h1>
-        <p>{message}</p>
+        <p role="status" aria-live="polite">{message}</p>
       </div>
     </div>
     <IconButton label="Back to home" onClick={onBack}>
@@ -35,7 +37,7 @@ export function ReviewHeader({ diagnostics, error, gridDetected, noCluesDetected
     <div className="review-header__feedback">
       {error && <p className="form-error" role="alert">{error}</p>}
       {diagnostics.map((diagnostic) => <p className="diagnostic workspace-diagnostic" key={diagnostic.code}>{diagnostic.message}</p>)}
-      {noCluesDetected && <p className="scan-recovery workspace-recovery" role="status">{gridDetected ? <><strong>No clues detected.</strong> Enter clues below or rescan with a brighter photo.</> : <><strong>No Sudoku grid detected.</strong> Rescan with the full grid in frame.</>}</p>}
+      {noCluesDetected && <InlineFeedback className="scan-recovery workspace-recovery">{gridDetected ? <><strong>No clues detected.</strong> Enter clues below or rescan with a brighter photo.</> : <><strong>No Sudoku grid detected.</strong> Rescan with the full grid in frame.</>}</InlineFeedback>}
     </div>
   </div>
 }

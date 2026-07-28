@@ -15,4 +15,27 @@ describe('puzzleStore hint application', () => {
     expect(boardValues(usePuzzleStore.getState().board)).toEqual(before)
     expect(usePuzzleStore.getState().hintHistory).toEqual([eliminationStep])
   })
+
+  it('preserves manual notes through value entry and makes cleanup undoable', () => {
+    usePuzzleStore.getState().setPuzzle(emptyGrid())
+    usePuzzleStore.getState().toggleNote({ row: 0, col: 0 }, 4)
+    usePuzzleStore.getState().setValue({ row: 0, col: 0 }, 5)
+    expect(usePuzzleStore.getState().board[0][0].notes).toEqual([4])
+    usePuzzleStore.getState().setValue({ row: 0, col: 0 }, null)
+    usePuzzleStore.getState().setValue({ row: 0, col: 1 }, 4)
+    expect(usePuzzleStore.getState().cleanupManualNotes()).toBe(1)
+    expect(usePuzzleStore.getState().board[0][0].notes).toEqual([])
+    usePuzzleStore.getState().undoMove()
+    expect(usePuzzleStore.getState().board[0][0].notes).toEqual([4])
+  })
+
+  it('records an accepted candidate elimination separately from manual notes', () => {
+    usePuzzleStore.getState().setPuzzle(emptyGrid())
+    usePuzzleStore.getState().toggleNote({ row: 0, col: 2 }, 1)
+    usePuzzleStore.getState().applyStep(eliminationStep)
+    expect(usePuzzleStore.getState().board[0][2].notes).toEqual([1])
+    expect(usePuzzleStore.getState().board[0][2].assistantExcluded).toEqual([1, 2])
+    usePuzzleStore.getState().undoMove()
+    expect(usePuzzleStore.getState().board[0][2].assistantExcluded).toEqual([])
+  })
 })

@@ -1,5 +1,5 @@
 import { boxIndex } from './board'
-import { candidateKey, getCandidates } from './candidates'
+import { candidateKey, getCandidates, type CandidateMap } from './candidates'
 import { DIGITS, type CellPosition, type Digit, type Grid, type HintConstraint, type SolverStep, type UnitKind } from './types'
 
 const unitCells = (kind: UnitKind, index: number): CellPosition[] => {
@@ -49,8 +49,7 @@ const compareClarity = (grid: Grid, a: SolverStep, b: SolverStep) => {
 
 const clearest = (grid: Grid, steps: SolverStep[]) => steps.sort((a, b) => compareClarity(grid, a, b))[0] ?? null
 
-const nakedSingle = (grid: Grid): SolverStep | null => {
-  const candidates = getCandidates(grid)
+const nakedSingle = (grid: Grid, candidates: CandidateMap): SolverStep | null => {
   const steps: SolverStep[] = []
   for (const [key, values] of candidates) if (values.length === 1) {
     const [row, col] = key.split(':').map(Number)
@@ -64,8 +63,7 @@ const nakedSingle = (grid: Grid): SolverStep | null => {
   return clearest(grid, steps)
 }
 
-const hiddenSingle = (grid: Grid): SolverStep | null => {
-  const candidates = getCandidates(grid)
+const hiddenSingle = (grid: Grid, candidates: CandidateMap): SolverStep | null => {
   const steps: SolverStep[] = []
   for (const kind of ['row', 'column', 'box'] as UnitKind[]) for (let index = 0; index < 9; index += 1) {
     const cells = unitCells(kind, index).filter((cell) => !grid[cell.row][cell.col])
@@ -83,8 +81,7 @@ const hiddenSingle = (grid: Grid): SolverStep | null => {
   return clearest(grid, steps)
 }
 
-const nakedPair = (grid: Grid): SolverStep | null => {
-  const candidates = getCandidates(grid)
+const nakedPair = (grid: Grid, candidates: CandidateMap): SolverStep | null => {
   const steps: SolverStep[] = []
   for (const kind of ['row', 'column', 'box'] as UnitKind[]) for (let index = 0; index < 9; index += 1) {
     const cells = unitCells(kind, index).filter((cell) => !grid[cell.row][cell.col])
@@ -103,8 +100,7 @@ const nakedPair = (grid: Grid): SolverStep | null => {
   return clearest(grid, steps)
 }
 
-const pointingPair = (grid: Grid): SolverStep | null => {
-  const candidates = getCandidates(grid)
+const pointingPair = (grid: Grid, candidates: CandidateMap): SolverStep | null => {
   const steps: SolverStep[] = []
   for (let box = 0; box < 9; box += 1) for (const value of DIGITS) {
     const supporters = unitCells('box', box).filter((cell) => candidatesAt(candidates, cell).includes(value))
@@ -123,8 +119,7 @@ const pointingPair = (grid: Grid): SolverStep | null => {
   return clearest(grid, steps)
 }
 
-const boxLineReduction = (grid: Grid): SolverStep | null => {
-  const candidates = getCandidates(grid)
+const boxLineReduction = (grid: Grid, candidates: CandidateMap): SolverStep | null => {
   const steps: SolverStep[] = []
   for (const kind of ['row', 'column'] as const) for (let index = 0; index < 9; index += 1) for (const value of DIGITS) {
     const supporters = unitCells(kind, index).filter((cell) => candidatesAt(candidates, cell).includes(value))
@@ -140,5 +135,5 @@ const boxLineReduction = (grid: Grid): SolverStep | null => {
 }
 
 /** Returns the clearest available human-style next step; it never uses the full solution or mutates the grid. */
-export const getNextLogicalStep = (grid: Grid): SolverStep | null =>
-  nakedSingle(grid) ?? hiddenSingle(grid) ?? nakedPair(grid) ?? pointingPair(grid) ?? boxLineReduction(grid)
+export const getNextLogicalStep = (grid: Grid, candidateMap = getCandidates(grid)): SolverStep | null =>
+  nakedSingle(grid, candidateMap) ?? hiddenSingle(grid, candidateMap) ?? nakedPair(grid, candidateMap) ?? pointingPair(grid, candidateMap) ?? boxLineReduction(grid, candidateMap)

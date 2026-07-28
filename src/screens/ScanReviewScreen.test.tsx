@@ -4,18 +4,23 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { emptyGrid } from '../engine/board'
 import { scannerSession } from '../scanner/session'
 import { usePuzzleStore } from '../store/puzzleStore'
-import { photographedPuzzleScanResult, photographedPuzzleSolution } from '../test/fixtures/photographedPuzzle'
+import { photographedPuzzleSolution } from '../test/fixtures/photographedPuzzle'
+import { portraitScanReviewFixture } from '../test/fixtures/scanReview'
 import { TestRouter } from '../test/TestRouter'
 import type { Digit } from '../engine/types'
 import type { ScanResult } from '../scanner/types'
 import { ScanReviewScreen } from './ScanReviewScreen'
 
-const experimentalResult: ScanResult = {
+const productionResult: ScanResult = {
   grid: [[5, 3, null, null, null, null, null, null, null], ...Array.from({ length: 8 }, () => Array(9).fill(null))],
-  cells: [{ row: 0, col: 0, value: 5, confidence: 0.98, inkRatio: 0.2 }, { row: 0, col: 1, value: 3, confidence: 0.62, inkRatio: 0.2 }],
+  cells: [
+    { row: 0, col: 0, value: 5, confidence: .98, inkRatio: .2, sourceRegion: { points: [{ x: 0, y: 0 }, { x: .1, y: 0 }, { x: .1, y: .1 }, { x: 0, y: .1 }] } },
+    { row: 0, col: 1, value: 3, confidence: .62, inkRatio: .2, sourceRegion: { points: [{ x: .1, y: 0 }, { x: .2, y: 0 }, { x: .2, y: .1 }, { x: .1, y: .1 }] } }
+  ],
   image: { width: 900, height: 900, bounds: { x: 0, y: 0, size: 900 } },
   diagnostics: [],
-  modelStatus: 'production'
+  modelStatus: 'production',
+  confidencePolicy: { reviewThreshold: .8 }
 }
 
 const emptyResult: ScanResult = {
@@ -30,12 +35,22 @@ const unsolvableResult: ScanResult = {
   cells: [...[1, 2, 3, 4, 5, 6, 7, 8].map((value, col) => ({ row: 0, col, value: value as Digit, confidence: .98, inkRatio: .2 })), { row: 1, col: 8, value: 9, confidence: .98, inkRatio: .2 }],
   image: { width: 900, height: 900, bounds: { x: 0, y: 0, size: 900 } },
   diagnostics: [],
-  modelStatus: 'production'
+  modelStatus: 'production',
+  confidencePolicy: { reviewThreshold: .8 }
+}
+
+const uniqueResult: ScanResult = {
+  grid: photographedPuzzleSolution.map((row, rowIndex) => row.map((value, col) => rowIndex === 8 && col === 8 ? null : value)),
+  cells: photographedPuzzleSolution.flatMap((row, rowIndex) => row.flatMap((value, col) => rowIndex === 8 && col === 8 ? [] : [{ row: rowIndex, col, value, confidence: .99, inkRatio: .2 }])),
+  image: { width: 900, height: 900, bounds: { x: 0, y: 0, size: 900 } },
+  diagnostics: [],
+  modelStatus: 'production',
+  confidencePolicy: { reviewThreshold: .8 }
 }
 
 const renderReview = async () => {
   render(<TestRouter><ScanReviewScreen /></TestRouter>)
-  await waitFor(() => expect(usePuzzleStore.getState().selected).toEqual({ row: 0, col: 0 }))
+  await waitFor(() => expect(usePuzzleStore.getState().selected).not.toBeNull())
 }
 
 afterEach(() => {
@@ -45,107 +60,99 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-describe('ScanReviewScreen uncertainty workflow', () => {
-  it('requires explicit confirmation for low-confidence clues and never resolves on focus', async () => {
-    scannerSession.setResult(experimentalResult)
+describe('ScanReviewScreen', () => {
+  it('keeps a 24-clue review compact while bulk acceptance leaves one clue for the normal loop', async () => {
+    scannerSession.setResult(portraitScanReviewFixture)
     await renderReview()
-    expect(screen.getByRole('status')).toHaveTextContent('2 scanned')
-    expect(screen.getByRole('status')).toHaveTextContent('1 to review')
+    expect(screen.getByText('0 of 24 reviewed')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Accept high-confidence' }))
+    expect(screen.getByText('23 of 24 reviewed')).toBeInTheDocument()
+    expect(screen.getByText('1 clue remains before you can continue.')).toBeInTheDocument()
+  })
 
-    const uncertain = screen.getByRole('gridcell', { name: /Row 1, column 2: 3, editable, scanned clue, scan review pending/ })
-    fireEvent.focus(uncertain)
-    expect(screen.getByRole('gridcell', { name: /Row 1, column 2: 3, editable, scanned clue, scan review pending/ })).toHaveClass('is-scan-pending')
-    fireEvent.click(uncertain)
+  it('prioritizes lower-confidence clues and only bulk-accepts production high-confidence clues', async () => {
+    scannerSession.setResult(productionResult)
+    await renderReview()
+    expect(screen.getByText('0 of 2 reviewed')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Accept high-confidence' }))
+    expect(screen.getByText('1 of 2 reviewed')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Next needs review' }))
+    expect(screen.getByRole('gridcell', { name: /Row 1, column 2: 3.*scan review pending/ })).toHaveAttribute('aria-selected', 'true')
     fireEvent.click(screen.getByRole('button', { name: 'Confirm value' }))
-    expect(screen.getByRole('status')).toHaveTextContent('1 confirmed')
-    expect(screen.getByRole('status')).toHaveTextContent('0 to review')
-    expect(screen.getByRole('gridcell', { name: /Row 1, column 2: 3, editable, scanned clue, scan reviewed/ })).toHaveClass('is-scan-reviewed')
+    expect(screen.getByText('2 of 2 reviewed')).toBeInTheDocument()
+    expect(screen.getByRole('gridcell', { name: /Row 1, column 2: 3.*scan confirmed/ })).toHaveClass('is-scan-confirmed')
   })
 
-  it('directs the player to the next uncertain clue before allowing continuation', async () => {
-    scannerSession.setResult(experimentalResult)
+  it('requires individual confirmation for experimental high-confidence clues', async () => {
+    scannerSession.setResult({ ...productionResult, modelStatus: 'experimental' })
     await renderReview()
-    fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
-    expect(screen.getByRole('alert')).toHaveTextContent('Confirm the 1 uncertain clue')
-    expect(screen.getByRole('gridcell', { name: /Row 1, column 2: 3, editable, scanned clue, scan review pending/ })).toHaveAttribute('aria-selected', 'true')
+    expect(screen.queryByRole('button', { name: 'Accept high-confidence' })).not.toBeInTheDocument()
+    expect(screen.getByText('0 of 2 reviewed')).toBeInTheDocument()
   })
 
-  it('marks an edited uncertain clue before and after explicit confirmation', async () => {
-    scannerSession.setResult(experimentalResult)
+  it('reopens a confirmed clue after editing and preserves confirmation through undo', async () => {
+    scannerSession.setResult(productionResult)
     await renderReview()
-    const uncertain = screen.getByRole('gridcell', { name: /Row 1, column 2: 3, editable, scanned clue, scan review pending/ })
-    uncertain.focus()
-    fireEvent.keyDown(uncertain, { key: '8', code: 'Digit8' })
-
-    const corrected = screen.getByRole('gridcell', { name: /Row 1, column 2: 8, editable, scanned clue, corrected, scan review pending/ })
-    expect(corrected).toHaveClass('is-scan-corrected', 'is-scan-pending')
-    expect(corrected).toHaveTextContent('Edited')
-    fireEvent.click(corrected)
     fireEvent.click(screen.getByRole('button', { name: 'Confirm value' }))
-    expect(screen.getByRole('gridcell', { name: /Row 1, column 2: 8, editable, scanned clue, corrected, scan reviewed/ })).toHaveClass('is-scan-reviewed')
+    const selected = screen.getByRole('gridcell', { name: /Row 1, column 1: 5.*scan confirmed/ })
+    selected.focus()
+    fireEvent.keyDown(selected, { key: '8', code: 'Digit8' })
+    expect(screen.getByRole('gridcell', { name: /Row 1, column 1: 8.*corrected.*scan review pending/ })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Undo' }))
+    expect(screen.getByRole('gridcell', { name: /Row 1, column 1: 5.*scan confirmed/ })).toBeInTheDocument()
   })
 
-  it('keeps an empty scan in manual recovery until a clue is entered', async () => {
+  it('keeps missed cells editable and describes an empty scan without opening a modal', async () => {
     scannerSession.setResult(emptyResult)
     await renderReview()
-    const continueButton = screen.getByRole('button', { name: 'Continue' })
-    expect(continueButton).toBeDisabled()
-    fireEvent.click(screen.getByRole('gridcell', { name: /Row 1, column 1, empty/ }))
+    expect(screen.queryByRole('button', { name: 'Continue to solver' })).not.toBeInTheDocument()
+    expect(screen.getByText('Resolve the puzzle status before continuing.')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('gridcell', { name: 'Row 1, column 1, empty, editable' }))
     fireEvent.click(screen.getByRole('button', { name: '7' }))
-    await waitFor(() => expect(continueButton).toBeEnabled())
+    expect(screen.getByText('Checking whether the clues form one puzzle…')).toBeInTheDocument()
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
-  it('shows the original photo in an accessible comparison sheet and restores focus', async () => {
-    vi.stubGlobal('URL', { createObjectURL: () => 'blob:puzzle-photo', revokeObjectURL: () => undefined })
-    scannerSession.setFile(new File(['photo'], 'puzzle.jpg', { type: 'image/jpeg' }))
-    scannerSession.setResult(experimentalResult)
+  it('shows duplicate conflicts inline and identifies unsolvable reviewed scans', async () => {
+    scannerSession.setResult({ ...productionResult, cells: productionResult.cells.map((cell) => ({ ...cell, confidence: .98 })) })
     await renderReview()
-    const trigger = screen.getByRole('button', { name: 'Compare photo' })
-    trigger.focus()
-    fireEvent.click(trigger)
-    expect(screen.getByRole('dialog', { name: 'Compare with original photo' })).toBeInTheDocument()
-    expect(screen.getByRole('dialog', { name: 'Compare with original photo' }).querySelector('img')).toHaveAttribute('src', 'blob:puzzle-photo')
-    const close = screen.getByRole('button', { name: 'Close photo' })
-    expect(close).toHaveFocus()
-    fireEvent.keyDown(close, { key: 'Escape' })
-    expect(screen.queryByRole('dialog', { name: 'Compare with original photo' })).not.toBeInTheDocument()
-    expect(trigger).toHaveFocus()
-  })
-
-  it('keeps invalid and unsolvable scan results in review', async () => {
-    scannerSession.setResult({ ...experimentalResult, cells: experimentalResult.cells.map((cell) => ({ ...cell, confidence: .98 })) })
-    await renderReview()
-    fireEvent.click(screen.getByRole('gridcell', { name: /Row 1, column 3, empty, editable/ }))
+    fireEvent.click(screen.getByRole('gridcell', { name: 'Row 1, column 3, empty, editable' }))
     fireEvent.click(screen.getByRole('button', { name: '5' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
-    expect(screen.getByRole('alert')).toHaveTextContent('Duplicate starting numbers are highlighted')
+    expect(screen.getByText('Duplicate clues need correction before the puzzle can be solved.')).toBeInTheDocument()
 
     cleanup()
     scannerSession.clear()
     act(() => usePuzzleStore.getState().setReviewGrid(emptyGrid()))
     scannerSession.setResult(unsolvableResult)
     await renderReview()
-    fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
-    expect(screen.getByRole('alert')).toHaveTextContent('This puzzle has no solution')
+    fireEvent.click(screen.getByRole('button', { name: 'Accept high-confidence' }))
+    await screen.findByText('These clues cannot form a Sudoku. Check the highlighted values.')
   })
 
-  it('accepts a reviewed photographed puzzle and navigates to the solver', async () => {
-    scannerSession.setResult({ ...photographedPuzzleScanResult, cells: photographedPuzzleScanResult.cells.map((cell) => ({ ...cell, confidence: 0.98 })) })
+  it('keeps the source image in the review workspace and clears it when rescanning', async () => {
+    vi.stubGlobal('URL', { createObjectURL: () => 'blob:puzzle-photo', revokeObjectURL: () => undefined })
+    scannerSession.setFile(new File(['photo'], 'puzzle.jpg', { type: 'image/jpeg' }))
+    scannerSession.setResult(productionResult)
+    const clearSession = vi.spyOn(scannerSession, 'clear')
+    render(<TestRouter initialEntries={['/review']}><Routes><Route path="/review" element={<ScanReviewScreen/>}/><Route path="/camera" element={<p>Camera destination</p>}/></Routes></TestRouter>)
+    await screen.findByRole('img', { name: 'Original Sudoku photo used for this scan' })
+    expect(screen.getByText('Scanned as 5 · 98% confidence')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'View full image' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Rescan puzzle' }))
+    expect(await screen.findByText('Camera destination')).toBeInTheDocument()
+    expect(clearSession).toHaveBeenCalledOnce()
+  })
+
+  it('continues only after a unique production scan is explicitly bulk-accepted', async () => {
+    scannerSession.setResult(uniqueResult)
     const clearSession = vi.spyOn(scannerSession, 'clear').mockImplementation(() => undefined)
-    render(
-      <TestRouter initialEntries={['/review']}>
-        <Routes><Route path="/review" element={<ScanReviewScreen/>}/><Route path="/solve" element={<p>Solver destination</p>}/></Routes>
-      </TestRouter>
-    )
-
-    await waitFor(() => expect(usePuzzleStore.getState().selected).toEqual({ row: 0, col: 0 }))
-
-    fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
+    render(<TestRouter initialEntries={['/review']}><Routes><Route path="/review" element={<ScanReviewScreen/>}/><Route path="/solve" element={<p>Solver destination</p>}/></Routes></TestRouter>)
+    await screen.findByRole('button', { name: 'Accept high-confidence' })
+    fireEvent.click(screen.getByRole('button', { name: 'Accept high-confidence' }))
+    await screen.findByText('Ready to solve: the reviewed clues have one solution.')
+    fireEvent.click(screen.getByRole('button', { name: 'Continue to solver' }))
     await screen.findByText('Solver destination')
     expect(clearSession).toHaveBeenCalledOnce()
-    clearSession.mockRestore()
-    scannerSession.clear()
-    expect(scannerSession.getResult()).toBeNull()
     expect(usePuzzleStore.getState().solution).toEqual(photographedPuzzleSolution)
   })
 })

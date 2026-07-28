@@ -32,7 +32,7 @@ export function HintPanel({ step, level, onLevel, onApply }: { step: SolverStep 
     </div>
     <div className="hint-actions">
       {level < 3 && <Button variant="ghost" onClick={() => onLevel(level + 1)}>More detail</Button>}
-      {level >= 3 && step.action === 'place-number' && <Button variant="primary" onClick={onApply}>Apply {step.value}</Button>}
+      {level >= 3 && <Button variant="primary" onClick={onApply}>{step.action === 'place-number' ? `Apply ${step.value}` : 'Apply candidate removal'}</Button>}
     </div>
   </aside>
 }

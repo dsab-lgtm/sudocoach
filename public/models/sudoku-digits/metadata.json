@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "modelStatus": "experimental",
   "inputShape": [
     28,
@@ -7,6 +7,7 @@
     1
   ],
   "labels": [
+    0,
     1,
     2,
     3,
@@ -19,153 +20,36 @@
   ],
   "preprocessingVersion": "v2",
   "confidenceThresholds": {
-    "reject": 0.53,
-    "review": 0.63
+    "reject": 0.8350000000000004,
+    "review": 0.9350000000000004
+  },
+  "calibration": {
+    "temperature": 0.9250000000000004
   },
   "metrics": {
-    "realPhotoAccuracy": 0.7851851851851852,
-    "minimumClassRecall": 0.6666666666666666,
+    "realPhotoAccuracy": 0.7578125,
+    "minimumClassRecall": 0.5833333333333334,
     "aggregate": {
-      "meanAccuracy": 0.7851851851851852,
+      "meanAccuracy": 0.7578125,
       "worstAccuracy": 0.5,
       "meanMinimumClassRecall": 0.5833333333333334
     },
     "reviewFirst": {
-      "accuracy": 0.7851851851851852,
-      "acceptedAccuracy": 0.8793103448275862,
-      "correctSuggestions": 102,
-      "knownClueCoverage": 0.8592592592592593,
-      "perClassRecall": {
-        "1": 0.8421052631578947,
-        "2": 0.75,
-        "3": 0.6875,
-        "4": 0.7857142857142857,
-        "5": 0.7777777777777778,
-        "6": 0.8888888888888888,
-        "7": 0.7692307692307693,
-        "8": 0.7894736842105263,
-        "9": 0.6666666666666666
-      },
-      "minimumClassRecall": 0.6666666666666666,
-      "confusionMatrix": [
-        [
-          16,
-          0,
-          1,
-          0,
-          0,
-          2,
-          0,
-          0,
-          0
-        ],
-        [
-          0,
-          9,
-          0,
-          0,
-          1,
-          0,
-          1,
-          1,
-          0
-        ],
-        [
-          1,
-          0,
-          11,
-          0,
-          1,
-          0,
-          0,
-          2,
-          1
-        ],
-        [
-          0,
-          0,
-          0,
-          11,
-          0,
-          0,
-          1,
-          1,
-          1
-        ],
-        [
-          0,
-          0,
-          1,
-          0,
-          14,
-          0,
-          1,
-          1,
-          1
-        ],
-        [
-          0,
-          0,
-          0,
-          1,
-          0,
-          16,
-          0,
-          0,
-          1
-        ],
-        [
-          0,
-          0,
-          0,
-          0,
-          0,
-          1,
-          10,
-          2,
-          0
-        ],
-        [
-          2,
-          0,
-          1,
-          0,
-          0,
-          1,
-          0,
-          15,
-          0
-        ],
-        [
-          1,
-          0,
-          0,
-          1,
-          0,
-          0,
-          0,
-          0,
-          4
-        ]
-      ],
-      "confidenceCoverage": {
-        "0.35": 0.9629629629629629,
-        "0.5": 0.8888888888888888,
-        "0.7": 0.762962962962963,
-        "0.9": 0.6666666666666666
-      }
+      "digitAccuracy": 0.7578125,
+      "worstDigitAccuracy": 0.5,
+      "acceptedAccuracy": 0.9523809523809523,
+      "correctSuggestions": 99,
+      "knownClueCoverage": 0.75,
+      "blankFalsePositiveRate": 0.025510204081632654,
+      "minimumClassRecall": 0.5833333333333334
     },
     "blankGate": {
-      "samples": 324,
-      "blankFalsePositiveRate": 0.13227513227513227,
-      "digitFalseNegativeRate": 0.037037037037037035,
-      "blankCells": 189,
-      "digitCells": 135
+      "blankFalsePositiveRate": 0.025510204081632654
     }
   },
   "source": {
-    "trainingRun": "experimental-20260727T115900Z",
-    "sha256": "67b79bad22438f7c9a8f764c72e235e6ee1e3243da16262c455b5ea7d6d8cc40"
+    "trainingRun": "improved-experimental-20260728T134757Z",
+    "sha256": "6283fd90f5f74cdfa8ecf873ad229ed8d346855cc15c53eef9df554bd51b8c8a"
   },
   "crossValidation": {
     "folds": [
@@ -177,11 +61,15 @@
         ],
         "validation": "IMG_4228.jpg",
         "test": "IMG_4229.jpg",
+        "temperature": 1.3500000000000008,
+        "rejectThreshold": 0.8100000000000004,
         "metrics": {
-          "accuracy": 1.0,
+          "digitAccuracy": 1.0,
           "acceptedAccuracy": 1.0,
           "correctSuggestions": 35,
           "knownClueCoverage": 1.0,
+          "blankFalsePositiveRate": 0.0,
+          "blankFalseNegativeRate": 0.0,
           "perClassRecall": {
             "1": 1.0,
             "2": 1.0,
@@ -294,14 +182,24 @@
               0,
               1
             ]
-          ],
-          "confidenceCoverage": {
-            "0.35": 1.0,
-            "0.5": 1.0,
-            "0.7": 1.0,
-            "0.9": 1.0
+          ]
+        },
+        "calibrationCurve": [
+          {
+            "minimumConfidence": 0.8,
+            "maximumConfidence": 0.9,
+            "samples": 1,
+            "meanConfidence": 0.8587931394577026,
+            "accuracy": 1.0
+          },
+          {
+            "minimumConfidence": 0.9,
+            "maximumConfidence": 1.0,
+            "samples": 34,
+            "meanConfidence": 0.9834249019622803,
+            "accuracy": 1.0
           }
-        }
+        ]
       },
       {
         "fold": 1,
@@ -311,11 +209,15 @@
         ],
         "validation": "IMG_4229.jpg",
         "test": "IMG_4226.jpg",
+        "temperature": 0.5,
+        "rejectThreshold": 0.8200000000000004,
         "metrics": {
-          "accuracy": 1.0,
+          "digitAccuracy": 1.0,
           "acceptedAccuracy": 1.0,
           "correctSuggestions": 36,
           "knownClueCoverage": 1.0,
+          "blankFalsePositiveRate": 0.0,
+          "blankFalseNegativeRate": 0.0,
           "perClassRecall": {
             "1": 1.0,
             "2": 1.0,
@@ -428,14 +330,17 @@
               0,
               2
             ]
-          ],
-          "confidenceCoverage": {
-            "0.35": 1.0,
-            "0.5": 1.0,
-            "0.7": 1.0,
-            "0.9": 0.8611111111111112
+          ]
+        },
+        "calibrationCurve": [
+          {
+            "minimumConfidence": 0.9,
+            "maximumConfidence": 1.0,
+            "samples": 36,
+            "meanConfidence": 0.9972216486930847,
+            "accuracy": 1.0
           }
-        }
+        ]
       },
       {
         "fold": 2,
@@ -445,17 +350,21 @@
         ],
         "validation": "IMG_4226.jpg",
         "test": "IMG_4227.jpg",
+        "temperature": 0.5,
+        "rejectThreshold": 0.9300000000000005,
         "metrics": {
-          "accuracy": 0.5,
-          "acceptedAccuracy": 0.7058823529411765,
-          "correctSuggestions": 12,
-          "knownClueCoverage": 0.53125,
+          "digitAccuracy": 0.53125,
+          "acceptedAccuracy": 0.8095238095238095,
+          "correctSuggestions": 17,
+          "knownClueCoverage": 0.65625,
+          "blankFalsePositiveRate": 0.10204081632653061,
+          "blankFalseNegativeRate": 0.1836734693877551,
           "perClassRecall": {
-            "1": 0.3333333333333333,
+            "1": 0.0,
             "2": 0.6666666666666666,
             "3": 0.3333333333333333,
             "4": 0.6,
-            "5": 0.6666666666666666,
+            "5": 1.0,
             "6": 0.75,
             "7": 0.0,
             "8": 0.3333333333333333,
@@ -464,81 +373,81 @@
           "minimumClassRecall": 0.0,
           "confusionMatrix": [
             [
-              1,
-              0,
-              1,
-              0,
-              0,
-              1,
-              0,
-              0,
-              0
-            ],
-            [
-              0,
-              2,
-              0,
               0,
               0,
               0,
               0,
               1,
-              0
-            ],
-            [
               0,
-              0,
-              2,
-              0,
-              1,
-              0,
-              0,
-              2,
-              1
-            ],
-            [
-              0,
-              0,
-              0,
-              3,
-              0,
-              0,
-              1,
-              1,
-              0
-            ],
-            [
-              0,
-              0,
-              0,
-              0,
-              4,
-              0,
-              1,
-              1,
-              0
-            ],
-            [
-              0,
-              0,
-              0,
-              0,
-              0,
-              3,
               0,
               0,
               1
             ],
             [
               0,
+              2,
               0,
               0,
               0,
               0,
+              0,
+              1,
+              0
+            ],
+            [
               0,
               0,
               2,
+              0,
+              2,
+              0,
+              0,
+              1,
               0
+            ],
+            [
+              0,
+              0,
+              0,
+              3,
+              1,
+              0,
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              6,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              3,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              1
             ],
             [
               1,
@@ -562,14 +471,45 @@
               0,
               0
             ]
-          ],
-          "confidenceCoverage": {
-            "0.35": 0.84375,
-            "0.5": 0.59375,
-            "0.7": 0.25,
-            "0.9": 0.03125
+          ]
+        },
+        "calibrationCurve": [
+          {
+            "minimumConfidence": 0.3,
+            "maximumConfidence": 0.4,
+            "samples": 1,
+            "meanConfidence": 0.35533589124679565,
+            "accuracy": 0.0
+          },
+          {
+            "minimumConfidence": 0.6,
+            "maximumConfidence": 0.7,
+            "samples": 1,
+            "meanConfidence": 0.6627766489982605,
+            "accuracy": 0.0
+          },
+          {
+            "minimumConfidence": 0.7,
+            "maximumConfidence": 0.8,
+            "samples": 3,
+            "meanConfidence": 0.7268642783164978,
+            "accuracy": 0.0
+          },
+          {
+            "minimumConfidence": 0.8,
+            "maximumConfidence": 0.9,
+            "samples": 2,
+            "meanConfidence": 0.8422639966011047,
+            "accuracy": 0.0
+          },
+          {
+            "minimumConfidence": 0.9,
+            "maximumConfidence": 1.0,
+            "samples": 25,
+            "meanConfidence": 0.9924626350402832,
+            "accuracy": 0.68
           }
-        }
+        ]
       },
       {
         "fold": 3,
@@ -579,26 +519,30 @@
         ],
         "validation": "IMG_4227.jpg",
         "test": "IMG_4228.jpg",
+        "temperature": 2.0000000000000013,
+        "rejectThreshold": 0.8500000000000004,
         "metrics": {
-          "accuracy": 0.59375,
-          "acceptedAccuracy": 0.6785714285714286,
-          "correctSuggestions": 19,
-          "knownClueCoverage": 0.875,
+          "digitAccuracy": 0.5,
+          "acceptedAccuracy": 1.0,
+          "correctSuggestions": 11,
+          "knownClueCoverage": 0.34375,
+          "blankFalsePositiveRate": 0.0,
+          "blankFalseNegativeRate": 0.08163265306122448,
           "perClassRecall": {
-            "1": 0.8,
+            "1": 0.4,
             "2": 0.3333333333333333,
             "3": 0.5,
             "4": 0.5,
             "5": 0.6,
             "6": 0.6666666666666666,
-            "7": 0.75,
+            "7": 0.5,
             "8": 0.6,
             "9": 0.3333333333333333
           },
           "minimumClassRecall": 0.3333333333333333,
           "confusionMatrix": [
             [
-              4,
+              2,
               0,
               0,
               0,
@@ -612,18 +556,7 @@
               0,
               1,
               0,
-              0,
               1,
-              0,
-              1,
-              0,
-              0
-            ],
-            [
-              1,
-              0,
-              1,
-              0,
               0,
               0,
               0,
@@ -633,13 +566,24 @@
             [
               0,
               0,
+              1,
               0,
               1,
               0,
               0,
               0,
+              0
+            ],
+            [
               0,
-              1
+              0,
+              0,
+              1,
+              0,
+              1,
+              0,
+              0,
+              0
             ],
             [
               0,
@@ -654,9 +598,9 @@
             ],
             [
               0,
-              0,
-              0,
               1,
+              0,
+              0,
               0,
               2,
               0,
@@ -669,67 +613,136 @@
               0,
               0,
               0,
+              0,
+              2,
+              0,
+              1
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              1,
               1,
               3,
-              0,
               0
             ],
             [
-              1,
               0,
               0,
               0,
               0,
-              1,
               0,
-              3,
-              0
-            ],
-            [
-              1,
-              0,
-              0,
-              1,
-              0,
-              0,
+              2,
               0,
               0,
               1
             ]
-          ],
-          "confidenceCoverage": {
-            "0.35": 1.0,
-            "0.5": 0.9375,
-            "0.7": 0.75,
-            "0.9": 0.71875
+          ]
+        },
+        "calibrationCurve": [
+          {
+            "minimumConfidence": 0.2,
+            "maximumConfidence": 0.3,
+            "samples": 1,
+            "meanConfidence": 0.2692273259162903,
+            "accuracy": 0.0
+          },
+          {
+            "minimumConfidence": 0.3,
+            "maximumConfidence": 0.4,
+            "samples": 5,
+            "meanConfidence": 0.33351531624794006,
+            "accuracy": 0.0
+          },
+          {
+            "minimumConfidence": 0.4,
+            "maximumConfidence": 0.5,
+            "samples": 5,
+            "meanConfidence": 0.46828803420066833,
+            "accuracy": 0.0
+          },
+          {
+            "minimumConfidence": 0.5,
+            "maximumConfidence": 0.6,
+            "samples": 2,
+            "meanConfidence": 0.5324529409408569,
+            "accuracy": 0.0
+          },
+          {
+            "minimumConfidence": 0.6,
+            "maximumConfidence": 0.7,
+            "samples": 3,
+            "meanConfidence": 0.6273994445800781,
+            "accuracy": 0.6666666666666666
+          },
+          {
+            "minimumConfidence": 0.7,
+            "maximumConfidence": 0.8,
+            "samples": 4,
+            "meanConfidence": 0.7473955154418945,
+            "accuracy": 0.5
+          },
+          {
+            "minimumConfidence": 0.8,
+            "maximumConfidence": 0.9,
+            "samples": 2,
+            "meanConfidence": 0.8419285416603088,
+            "accuracy": 1.0
+          },
+          {
+            "minimumConfidence": 0.9,
+            "maximumConfidence": 1.0,
+            "samples": 10,
+            "meanConfidence": 0.9345301389694214,
+            "accuracy": 1.0
           }
-        }
+        ]
       }
     ],
     "calibration": {
-      "reject": 0.53,
-      "review": 0.63,
-      "knownClueCoverage": 0.8592592592592593,
-      "fallbackUsed": false
+      "temperature": [
+        1.3500000000000008,
+        0.5,
+        0.5,
+        2.0000000000000013
+      ],
+      "rejectThreshold": [
+        0.8100000000000004,
+        0.8200000000000004,
+        0.9300000000000005,
+        0.8500000000000004
+      ]
     }
   },
   "selectedConfiguration": {
+    "name": "google-font-pretrained-blank-aware",
+    "classes": 10,
+    "phase": "pretrain-finetune",
+    "fontCorpus": "google",
     "filters": [
       20,
       40
     ],
     "dense": 64,
     "dropout": 0.2,
-    "synthetic": 300,
-    "augmentations": 45,
-    "epochs": 16
+    "pretrainSynthetic": 600,
+    "pretrainEpochs": 8,
+    "fineTunePerClass": 220,
+    "fineTuneEpochs": 12
   },
   "candidateSelection": {
-    "winner": "compact",
+    "winner": "google-font-pretrained-blank-aware",
     "candidates": [
       {
-        "name": "compact",
+        "name": "shipped-compact-control",
         "configuration": {
+          "name": "shipped-compact-control",
+          "classes": 9,
+          "phase": "combined",
+          "fontCorpus": "legacy",
           "filters": [
             20,
             40
@@ -737,139 +750,8 @@
           "dense": 64,
           "dropout": 0.2,
           "synthetic": 300,
-          "augmentations": 45,
+          "realAugmentations": 45,
           "epochs": 16
-        },
-        "calibration": {
-          "reject": 0.53,
-          "review": 0.63,
-          "knownClueCoverage": 0.8592592592592593,
-          "fallbackUsed": false
-        },
-        "metrics": {
-          "accuracy": 0.7851851851851852,
-          "acceptedAccuracy": 0.8793103448275862,
-          "correctSuggestions": 102,
-          "knownClueCoverage": 0.8592592592592593,
-          "perClassRecall": {
-            "1": 0.8421052631578947,
-            "2": 0.75,
-            "3": 0.6875,
-            "4": 0.7857142857142857,
-            "5": 0.7777777777777778,
-            "6": 0.8888888888888888,
-            "7": 0.7692307692307693,
-            "8": 0.7894736842105263,
-            "9": 0.6666666666666666
-          },
-          "minimumClassRecall": 0.6666666666666666,
-          "confusionMatrix": [
-            [
-              16,
-              0,
-              1,
-              0,
-              0,
-              2,
-              0,
-              0,
-              0
-            ],
-            [
-              0,
-              9,
-              0,
-              0,
-              1,
-              0,
-              1,
-              1,
-              0
-            ],
-            [
-              1,
-              0,
-              11,
-              0,
-              1,
-              0,
-              0,
-              2,
-              1
-            ],
-            [
-              0,
-              0,
-              0,
-              11,
-              0,
-              0,
-              1,
-              1,
-              1
-            ],
-            [
-              0,
-              0,
-              1,
-              0,
-              14,
-              0,
-              1,
-              1,
-              1
-            ],
-            [
-              0,
-              0,
-              0,
-              1,
-              0,
-              16,
-              0,
-              0,
-              1
-            ],
-            [
-              0,
-              0,
-              0,
-              0,
-              0,
-              1,
-              10,
-              2,
-              0
-            ],
-            [
-              2,
-              0,
-              1,
-              0,
-              0,
-              1,
-              0,
-              15,
-              0
-            ],
-            [
-              1,
-              0,
-              0,
-              1,
-              0,
-              0,
-              0,
-              0,
-              4
-            ]
-          ],
-          "confidenceCoverage": {
-            "0.35": 0.9629629629629629,
-            "0.5": 0.8888888888888888,
-            "0.7": 0.762962962962963,
-            "0.9": 0.6666666666666666
-          }
         },
         "folds": [
           {
@@ -880,11 +762,15 @@
             ],
             "validation": "IMG_4228.jpg",
             "test": "IMG_4229.jpg",
+            "temperature": 1.600000000000001,
+            "rejectThreshold": 0.41000000000000003,
             "metrics": {
-              "accuracy": 1.0,
+              "digitAccuracy": 1.0,
               "acceptedAccuracy": 1.0,
               "correctSuggestions": 35,
               "knownClueCoverage": 1.0,
+              "blankFalsePositiveRate": 0.0,
+              "blankFalseNegativeRate": 0.0,
               "perClassRecall": {
                 "1": 1.0,
                 "2": 1.0,
@@ -997,14 +883,52 @@
                   0,
                   1
                 ]
-              ],
-              "confidenceCoverage": {
-                "0.35": 1.0,
-                "0.5": 1.0,
-                "0.7": 1.0,
-                "0.9": 1.0
+              ]
+            },
+            "calibrationCurve": [
+              {
+                "minimumConfidence": 0.4,
+                "maximumConfidence": 0.5,
+                "samples": 1,
+                "meanConfidence": 0.4887697100639343,
+                "accuracy": 1.0
+              },
+              {
+                "minimumConfidence": 0.5,
+                "maximumConfidence": 0.6,
+                "samples": 1,
+                "meanConfidence": 0.5611613988876343,
+                "accuracy": 1.0
+              },
+              {
+                "minimumConfidence": 0.6,
+                "maximumConfidence": 0.7,
+                "samples": 3,
+                "meanConfidence": 0.6615728735923767,
+                "accuracy": 1.0
+              },
+              {
+                "minimumConfidence": 0.7,
+                "maximumConfidence": 0.8,
+                "samples": 1,
+                "meanConfidence": 0.782185971736908,
+                "accuracy": 1.0
+              },
+              {
+                "minimumConfidence": 0.8,
+                "maximumConfidence": 0.9,
+                "samples": 7,
+                "meanConfidence": 0.8668942451477051,
+                "accuracy": 1.0
+              },
+              {
+                "minimumConfidence": 0.9,
+                "maximumConfidence": 1.0,
+                "samples": 22,
+                "meanConfidence": 0.9499374032020569,
+                "accuracy": 1.0
               }
-            }
+            ]
           },
           {
             "fold": 1,
@@ -1014,11 +938,15 @@
             ],
             "validation": "IMG_4229.jpg",
             "test": "IMG_4226.jpg",
+            "temperature": 0.5,
+            "rejectThreshold": 0.8100000000000004,
             "metrics": {
-              "accuracy": 1.0,
+              "digitAccuracy": 1.0,
               "acceptedAccuracy": 1.0,
               "correctSuggestions": 36,
               "knownClueCoverage": 1.0,
+              "blankFalsePositiveRate": 0.0,
+              "blankFalseNegativeRate": 0.0,
               "perClassRecall": {
                 "1": 1.0,
                 "2": 1.0,
@@ -1131,14 +1059,17 @@
                   0,
                   2
                 ]
-              ],
-              "confidenceCoverage": {
-                "0.35": 1.0,
-                "0.5": 1.0,
-                "0.7": 1.0,
-                "0.9": 0.8611111111111112
+              ]
+            },
+            "calibrationCurve": [
+              {
+                "minimumConfidence": 0.9,
+                "maximumConfidence": 1.0,
+                "samples": 36,
+                "meanConfidence": 0.9962756037712097,
+                "accuracy": 1.0
               }
-            }
+            ]
           },
           {
             "fold": 2,
@@ -1148,38 +1079,31 @@
             ],
             "validation": "IMG_4226.jpg",
             "test": "IMG_4227.jpg",
+            "temperature": 0.5,
+            "rejectThreshold": 0.9400000000000005,
             "metrics": {
-              "accuracy": 0.5,
-              "acceptedAccuracy": 0.7058823529411765,
-              "correctSuggestions": 12,
+              "digitAccuracy": 0.59375,
+              "acceptedAccuracy": 0.9411764705882353,
+              "correctSuggestions": 16,
               "knownClueCoverage": 0.53125,
+              "blankFalsePositiveRate": 0.12244897959183673,
+              "blankFalseNegativeRate": 0.20408163265306123,
               "perClassRecall": {
                 "1": 0.3333333333333333,
                 "2": 0.6666666666666666,
                 "3": 0.3333333333333333,
-                "4": 0.6,
-                "5": 0.6666666666666666,
+                "4": 0.8,
+                "5": 0.8333333333333334,
                 "6": 0.75,
-                "7": 0.0,
+                "7": 0.5,
                 "8": 0.3333333333333333,
                 "9": null
               },
-              "minimumClassRecall": 0.0,
+              "minimumClassRecall": 0.3333333333333333,
               "confusionMatrix": [
                 [
                   1,
                   0,
-                  1,
-                  0,
-                  0,
-                  1,
-                  0,
-                  0,
-                  0
-                ],
-                [
-                  0,
-                  2,
                   0,
                   0,
                   0,
@@ -1190,34 +1114,45 @@
                 ],
                 [
                   0,
-                  0,
                   2,
                   0,
                   1,
                   0,
                   0,
-                  2,
-                  1
-                ],
-                [
                   0,
                   0,
-                  0,
-                  3,
-                  0,
-                  0,
-                  1,
-                  1,
                   0
                 ],
                 [
                   0,
+                  0,
+                  2,
+                  1,
+                  1,
+                  0,
+                  0,
+                  1,
+                  0
+                ],
+                [
                   0,
                   0,
                   0,
                   4,
                   0,
+                  0,
                   1,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  0,
+                  5,
+                  0,
+                  0,
                   1,
                   0
                 ],
@@ -1230,23 +1165,23 @@
                   3,
                   0,
                   0,
-                  1
-                ],
-                [
-                  0,
-                  0,
-                  0,
-                  0,
-                  0,
-                  0,
-                  0,
-                  2,
                   0
                 ],
                 [
-                  1,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
                   0,
                   1,
+                  1,
+                  0
+                ],
+                [
+                  2,
+                  0,
+                  0,
                   0,
                   0,
                   0,
@@ -1265,14 +1200,52 @@
                   0,
                   0
                 ]
-              ],
-              "confidenceCoverage": {
-                "0.35": 0.84375,
-                "0.5": 0.59375,
-                "0.7": 0.25,
-                "0.9": 0.03125
+              ]
+            },
+            "calibrationCurve": [
+              {
+                "minimumConfidence": 0.4,
+                "maximumConfidence": 0.5,
+                "samples": 2,
+                "meanConfidence": 0.45853883028030396,
+                "accuracy": 0.5
+              },
+              {
+                "minimumConfidence": 0.5,
+                "maximumConfidence": 0.6,
+                "samples": 2,
+                "meanConfidence": 0.5297442674636841,
+                "accuracy": 0.0
+              },
+              {
+                "minimumConfidence": 0.6,
+                "maximumConfidence": 0.7,
+                "samples": 2,
+                "meanConfidence": 0.666846752166748,
+                "accuracy": 0.0
+              },
+              {
+                "minimumConfidence": 0.7,
+                "maximumConfidence": 0.8,
+                "samples": 2,
+                "meanConfidence": 0.7371728420257568,
+                "accuracy": 1.0
+              },
+              {
+                "minimumConfidence": 0.8,
+                "maximumConfidence": 0.9,
+                "samples": 3,
+                "meanConfidence": 0.847259521484375,
+                "accuracy": 0.0
+              },
+              {
+                "minimumConfidence": 0.9,
+                "maximumConfidence": 1.0,
+                "samples": 21,
+                "meanConfidence": 0.9890778660774231,
+                "accuracy": 0.7619047619047619
               }
-            }
+            ]
           },
           {
             "fold": 3,
@@ -1282,18 +1255,22 @@
             ],
             "validation": "IMG_4227.jpg",
             "test": "IMG_4228.jpg",
+            "temperature": 2.0000000000000013,
+            "rejectThreshold": 0.9200000000000005,
             "metrics": {
-              "accuracy": 0.59375,
-              "acceptedAccuracy": 0.6785714285714286,
-              "correctSuggestions": 19,
-              "knownClueCoverage": 0.875,
+              "digitAccuracy": 0.65625,
+              "acceptedAccuracy": 1.0,
+              "correctSuggestions": 7,
+              "knownClueCoverage": 0.21875,
+              "blankFalsePositiveRate": 0.02040816326530612,
+              "blankFalseNegativeRate": 0.30612244897959184,
               "perClassRecall": {
                 "1": 0.8,
                 "2": 0.3333333333333333,
-                "3": 0.5,
+                "3": 1.0,
                 "4": 0.5,
                 "5": 0.6,
-                "6": 0.6666666666666666,
+                "6": 1.0,
                 "7": 0.75,
                 "8": 0.6,
                 "9": 0.3333333333333333
@@ -1306,7 +1283,707 @@
                   0,
                   0,
                   0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
                   1,
+                  0,
+                  0,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  2,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0,
+                  0,
+                  0,
+                  1
+                ],
+                [
+                  0,
+                  0,
+                  2,
+                  0,
+                  3,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  3,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  1,
+                  3,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  2,
+                  0,
+                  3,
+                  0
+                ],
+                [
+                  2,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              ]
+            },
+            "calibrationCurve": [
+              {
+                "minimumConfidence": 0.2,
+                "maximumConfidence": 0.3,
+                "samples": 1,
+                "meanConfidence": 0.2620452642440796,
+                "accuracy": 0.0
+              },
+              {
+                "minimumConfidence": 0.3,
+                "maximumConfidence": 0.4,
+                "samples": 6,
+                "meanConfidence": 0.34918415546417236,
+                "accuracy": 0.5
+              },
+              {
+                "minimumConfidence": 0.4,
+                "maximumConfidence": 0.5,
+                "samples": 3,
+                "meanConfidence": 0.43268290162086487,
+                "accuracy": 0.3333333333333333
+              },
+              {
+                "minimumConfidence": 0.5,
+                "maximumConfidence": 0.6,
+                "samples": 5,
+                "meanConfidence": 0.5598222017288208,
+                "accuracy": 0.2
+              },
+              {
+                "minimumConfidence": 0.7,
+                "maximumConfidence": 0.8,
+                "samples": 3,
+                "meanConfidence": 0.7523344159126282,
+                "accuracy": 0.6666666666666666
+              },
+              {
+                "minimumConfidence": 0.8,
+                "maximumConfidence": 0.9,
+                "samples": 3,
+                "meanConfidence": 0.8365573883056641,
+                "accuracy": 1.0
+              },
+              {
+                "minimumConfidence": 0.9,
+                "maximumConfidence": 1.0,
+                "samples": 11,
+                "meanConfidence": 0.949550986289978,
+                "accuracy": 1.0
+              }
+            ]
+          }
+        ],
+        "metrics": {
+          "digitAccuracy": 0.8125,
+          "worstDigitAccuracy": 0.59375,
+          "acceptedAccuracy": 0.9852941176470589,
+          "correctSuggestions": 94,
+          "knownClueCoverage": 0.6875,
+          "blankFalsePositiveRate": 0.03571428571428571,
+          "minimumClassRecall": 0.6666666666666667
+        },
+        "exportEligible": false
+      },
+      {
+        "name": "google-font-pretrained-nine-class",
+        "configuration": {
+          "name": "google-font-pretrained-nine-class",
+          "classes": 9,
+          "phase": "pretrain-finetune",
+          "fontCorpus": "google",
+          "filters": [
+            20,
+            40
+          ],
+          "dense": 64,
+          "dropout": 0.2,
+          "pretrainSynthetic": 600,
+          "pretrainEpochs": 8,
+          "fineTunePerClass": 220,
+          "fineTuneEpochs": 12
+        },
+        "folds": [
+          {
+            "fold": 0,
+            "training": [
+              "IMG_4226.jpg",
+              "IMG_4227.jpg"
+            ],
+            "validation": "IMG_4228.jpg",
+            "test": "IMG_4229.jpg",
+            "temperature": 2.0000000000000013,
+            "rejectThreshold": 0.5800000000000002,
+            "metrics": {
+              "digitAccuracy": 1.0,
+              "acceptedAccuracy": 1.0,
+              "correctSuggestions": 35,
+              "knownClueCoverage": 1.0,
+              "blankFalsePositiveRate": 0.0,
+              "blankFalseNegativeRate": 0.0,
+              "perClassRecall": {
+                "1": 1.0,
+                "2": 1.0,
+                "3": 1.0,
+                "4": 1.0,
+                "5": 1.0,
+                "6": 1.0,
+                "7": 1.0,
+                "8": 1.0,
+                "9": 1.0
+              },
+              "minimumClassRecall": 1.0,
+              "confusionMatrix": [
+                [
+                  5,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  4,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  2,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  4,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  0,
+                  4,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  5,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  4,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  6,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              ]
+            },
+            "calibrationCurve": [
+              {
+                "minimumConfidence": 0.7,
+                "maximumConfidence": 0.8,
+                "samples": 4,
+                "meanConfidence": 0.7596922516822815,
+                "accuracy": 1.0
+              },
+              {
+                "minimumConfidence": 0.8,
+                "maximumConfidence": 0.9,
+                "samples": 10,
+                "meanConfidence": 0.851520836353302,
+                "accuracy": 1.0
+              },
+              {
+                "minimumConfidence": 0.9,
+                "maximumConfidence": 1.0,
+                "samples": 21,
+                "meanConfidence": 0.9486569166183472,
+                "accuracy": 1.0
+              }
+            ]
+          },
+          {
+            "fold": 1,
+            "training": [
+              "IMG_4227.jpg",
+              "IMG_4228.jpg"
+            ],
+            "validation": "IMG_4229.jpg",
+            "test": "IMG_4226.jpg",
+            "temperature": 0.5,
+            "rejectThreshold": 0.6700000000000003,
+            "metrics": {
+              "digitAccuracy": 0.9722222222222222,
+              "acceptedAccuracy": 0.9705882352941176,
+              "correctSuggestions": 33,
+              "knownClueCoverage": 0.9444444444444444,
+              "blankFalsePositiveRate": 0.0,
+              "blankFalseNegativeRate": 0.0,
+              "perClassRecall": {
+                "1": 1.0,
+                "2": 1.0,
+                "3": 0.8333333333333334,
+                "4": 1.0,
+                "5": 1.0,
+                "6": 1.0,
+                "7": 1.0,
+                "8": 1.0,
+                "9": 1.0
+              },
+              "minimumClassRecall": 0.8333333333333334,
+              "confusionMatrix": [
+                [
+                  6,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  5,
+                  0,
+                  0,
+                  0,
+                  0,
+                  1,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  3,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  0,
+                  3,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  6,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  3,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  5,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  2
+                ]
+              ]
+            },
+            "calibrationCurve": [
+              {
+                "minimumConfidence": 0.5,
+                "maximumConfidence": 0.6,
+                "samples": 1,
+                "meanConfidence": 0.590826153755188,
+                "accuracy": 1.0
+              },
+              {
+                "minimumConfidence": 0.6,
+                "maximumConfidence": 0.7,
+                "samples": 2,
+                "meanConfidence": 0.6677640080451965,
+                "accuracy": 1.0
+              },
+              {
+                "minimumConfidence": 0.9,
+                "maximumConfidence": 1.0,
+                "samples": 33,
+                "meanConfidence": 0.9925836324691772,
+                "accuracy": 0.9696969696969697
+              }
+            ]
+          },
+          {
+            "fold": 2,
+            "training": [
+              "IMG_4228.jpg",
+              "IMG_4229.jpg"
+            ],
+            "validation": "IMG_4226.jpg",
+            "test": "IMG_4227.jpg",
+            "temperature": 0.5,
+            "rejectThreshold": 0.9500000000000005,
+            "metrics": {
+              "digitAccuracy": 0.5625,
+              "acceptedAccuracy": 0.8333333333333334,
+              "correctSuggestions": 15,
+              "knownClueCoverage": 0.5625,
+              "blankFalsePositiveRate": 0.08163265306122448,
+              "blankFalseNegativeRate": 0.20408163265306123,
+              "perClassRecall": {
+                "1": 0.3333333333333333,
+                "2": 0.6666666666666666,
+                "3": 0.3333333333333333,
+                "4": 0.6,
+                "5": 1.0,
+                "6": 0.75,
+                "7": 0.0,
+                "8": 0.3333333333333333,
+                "9": null
+              },
+              "minimumClassRecall": 0.0,
+              "confusionMatrix": [
+                [
+                  1,
+                  0,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  1
+                ],
+                [
+                  0,
+                  0,
+                  2,
+                  0,
+                  2,
+                  1,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  3,
+                  0,
+                  0,
+                  1,
+                  1,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  0,
+                  6,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  3,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  0,
+                  1,
+                  0,
+                  0,
+                  0,
+                  0,
+                  1,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ]
+              ]
+            },
+            "calibrationCurve": [
+              {
+                "minimumConfidence": 0.3,
+                "maximumConfidence": 0.4,
+                "samples": 1,
+                "meanConfidence": 0.3618643283843994,
+                "accuracy": 0.0
+              },
+              {
+                "minimumConfidence": 0.4,
+                "maximumConfidence": 0.5,
+                "samples": 2,
+                "meanConfidence": 0.452860951423645,
+                "accuracy": 0.0
+              },
+              {
+                "minimumConfidence": 0.5,
+                "maximumConfidence": 0.6,
+                "samples": 3,
+                "meanConfidence": 0.5457220673561096,
+                "accuracy": 0.0
+              },
+              {
+                "minimumConfidence": 0.7,
+                "maximumConfidence": 0.8,
+                "samples": 2,
+                "meanConfidence": 0.7381519079208374,
+                "accuracy": 0.5
+              },
+              {
+                "minimumConfidence": 0.8,
+                "maximumConfidence": 0.9,
+                "samples": 2,
+                "meanConfidence": 0.8693307638168335,
+                "accuracy": 0.5
+              },
+              {
+                "minimumConfidence": 0.9,
+                "maximumConfidence": 1.0,
+                "samples": 22,
+                "meanConfidence": 0.9908411502838135,
+                "accuracy": 0.7272727272727273
+              }
+            ]
+          },
+          {
+            "fold": 3,
+            "training": [
+              "IMG_4229.jpg",
+              "IMG_4226.jpg"
+            ],
+            "validation": "IMG_4227.jpg",
+            "test": "IMG_4228.jpg",
+            "temperature": 2.0000000000000013,
+            "rejectThreshold": 0.6700000000000003,
+            "metrics": {
+              "digitAccuracy": 0.53125,
+              "acceptedAccuracy": 0.8235294117647058,
+              "correctSuggestions": 14,
+              "knownClueCoverage": 0.53125,
+              "blankFalsePositiveRate": 0.08163265306122448,
+              "blankFalseNegativeRate": 0.30612244897959184,
+              "perClassRecall": {
+                "1": 0.8,
+                "2": 0.3333333333333333,
+                "3": 0.5,
+                "4": 0.0,
+                "5": 0.6,
+                "6": 0.6666666666666666,
+                "7": 0.5,
+                "8": 0.6,
+                "9": 0.3333333333333333
+              },
+              "minimumClassRecall": 0.0,
+              "confusionMatrix": [
+                [
+                  4,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
                   0,
                   0,
                   0
@@ -1316,7 +1993,7 @@
                   1,
                   0,
                   0,
-                  1,
+                  0,
                   0,
                   1,
                   0,
@@ -1337,9 +2014,9 @@
                   0,
                   0,
                   0,
+                  0,
+                  0,
                   1,
-                  0,
-                  0,
                   0,
                   0,
                   1
@@ -1357,9 +2034,9 @@
                 ],
                 [
                   0,
-                  0,
-                  0,
                   1,
+                  0,
+                  0,
                   0,
                   2,
                   0,
@@ -1372,8 +2049,8 @@
                   0,
                   0,
                   0,
-                  1,
-                  3,
+                  2,
+                  2,
                   0,
                   0
                 ],
@@ -1389,27 +2066,780 @@
                   0
                 ],
                 [
-                  1,
+                  2,
                   0,
                   0,
-                  1,
+                  0,
                   0,
                   0,
                   0,
                   0,
                   1
                 ]
-              ],
-              "confidenceCoverage": {
-                "0.35": 1.0,
-                "0.5": 0.9375,
-                "0.7": 0.75,
-                "0.9": 0.71875
+              ]
+            },
+            "calibrationCurve": [
+              {
+                "minimumConfidence": 0.1,
+                "maximumConfidence": 0.2,
+                "samples": 2,
+                "meanConfidence": 0.17885181307792664,
+                "accuracy": 0.0
+              },
+              {
+                "minimumConfidence": 0.2,
+                "maximumConfidence": 0.3,
+                "samples": 1,
+                "meanConfidence": 0.27733373641967773,
+                "accuracy": 0.0
+              },
+              {
+                "minimumConfidence": 0.3,
+                "maximumConfidence": 0.4,
+                "samples": 5,
+                "meanConfidence": 0.3522823452949524,
+                "accuracy": 0.0
+              },
+              {
+                "minimumConfidence": 0.4,
+                "maximumConfidence": 0.5,
+                "samples": 3,
+                "meanConfidence": 0.44253647327423096,
+                "accuracy": 0.6666666666666666
+              },
+              {
+                "minimumConfidence": 0.5,
+                "maximumConfidence": 0.6,
+                "samples": 1,
+                "meanConfidence": 0.5707548260688782,
+                "accuracy": 0.0
+              },
+              {
+                "minimumConfidence": 0.6,
+                "maximumConfidence": 0.7,
+                "samples": 1,
+                "meanConfidence": 0.6094388365745544,
+                "accuracy": 1.0
+              },
+              {
+                "minimumConfidence": 0.7,
+                "maximumConfidence": 0.8,
+                "samples": 6,
+                "meanConfidence": 0.7268571853637695,
+                "accuracy": 0.6666666666666666
+              },
+              {
+                "minimumConfidence": 0.8,
+                "maximumConfidence": 0.9,
+                "samples": 10,
+                "meanConfidence": 0.8367156982421875,
+                "accuracy": 0.8
+              },
+              {
+                "minimumConfidence": 0.9,
+                "maximumConfidence": 1.0,
+                "samples": 3,
+                "meanConfidence": 0.9163470268249512,
+                "accuracy": 0.6666666666666666
               }
-            }
+            ]
           }
-        ]
+        ],
+        "metrics": {
+          "digitAccuracy": 0.7664930555555556,
+          "worstDigitAccuracy": 0.53125,
+          "acceptedAccuracy": 0.9068627450980393,
+          "correctSuggestions": 97,
+          "knownClueCoverage": 0.7595486111111112,
+          "blankFalsePositiveRate": 0.04081632653061224,
+          "minimumClassRecall": 0.45833333333333337
+        },
+        "exportEligible": false
+      },
+      {
+        "name": "google-font-pretrained-blank-aware",
+        "configuration": {
+          "name": "google-font-pretrained-blank-aware",
+          "classes": 10,
+          "phase": "pretrain-finetune",
+          "fontCorpus": "google",
+          "filters": [
+            20,
+            40
+          ],
+          "dense": 64,
+          "dropout": 0.2,
+          "pretrainSynthetic": 600,
+          "pretrainEpochs": 8,
+          "fineTunePerClass": 220,
+          "fineTuneEpochs": 12
+        },
+        "folds": [
+          {
+            "fold": 0,
+            "training": [
+              "IMG_4226.jpg",
+              "IMG_4227.jpg"
+            ],
+            "validation": "IMG_4228.jpg",
+            "test": "IMG_4229.jpg",
+            "temperature": 1.3500000000000008,
+            "rejectThreshold": 0.8100000000000004,
+            "metrics": {
+              "digitAccuracy": 1.0,
+              "acceptedAccuracy": 1.0,
+              "correctSuggestions": 35,
+              "knownClueCoverage": 1.0,
+              "blankFalsePositiveRate": 0.0,
+              "blankFalseNegativeRate": 0.0,
+              "perClassRecall": {
+                "1": 1.0,
+                "2": 1.0,
+                "3": 1.0,
+                "4": 1.0,
+                "5": 1.0,
+                "6": 1.0,
+                "7": 1.0,
+                "8": 1.0,
+                "9": 1.0
+              },
+              "minimumClassRecall": 1.0,
+              "confusionMatrix": [
+                [
+                  5,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  4,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  2,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  4,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  0,
+                  4,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  5,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  4,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  6,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              ]
+            },
+            "calibrationCurve": [
+              {
+                "minimumConfidence": 0.8,
+                "maximumConfidence": 0.9,
+                "samples": 1,
+                "meanConfidence": 0.8587931394577026,
+                "accuracy": 1.0
+              },
+              {
+                "minimumConfidence": 0.9,
+                "maximumConfidence": 1.0,
+                "samples": 34,
+                "meanConfidence": 0.9834249019622803,
+                "accuracy": 1.0
+              }
+            ]
+          },
+          {
+            "fold": 1,
+            "training": [
+              "IMG_4227.jpg",
+              "IMG_4228.jpg"
+            ],
+            "validation": "IMG_4229.jpg",
+            "test": "IMG_4226.jpg",
+            "temperature": 0.5,
+            "rejectThreshold": 0.8200000000000004,
+            "metrics": {
+              "digitAccuracy": 1.0,
+              "acceptedAccuracy": 1.0,
+              "correctSuggestions": 36,
+              "knownClueCoverage": 1.0,
+              "blankFalsePositiveRate": 0.0,
+              "blankFalseNegativeRate": 0.0,
+              "perClassRecall": {
+                "1": 1.0,
+                "2": 1.0,
+                "3": 1.0,
+                "4": 1.0,
+                "5": 1.0,
+                "6": 1.0,
+                "7": 1.0,
+                "8": 1.0,
+                "9": 1.0
+              },
+              "minimumClassRecall": 1.0,
+              "confusionMatrix": [
+                [
+                  6,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  6,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  3,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  0,
+                  3,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  6,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  3,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  5,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  2
+                ]
+              ]
+            },
+            "calibrationCurve": [
+              {
+                "minimumConfidence": 0.9,
+                "maximumConfidence": 1.0,
+                "samples": 36,
+                "meanConfidence": 0.9972216486930847,
+                "accuracy": 1.0
+              }
+            ]
+          },
+          {
+            "fold": 2,
+            "training": [
+              "IMG_4228.jpg",
+              "IMG_4229.jpg"
+            ],
+            "validation": "IMG_4226.jpg",
+            "test": "IMG_4227.jpg",
+            "temperature": 0.5,
+            "rejectThreshold": 0.9300000000000005,
+            "metrics": {
+              "digitAccuracy": 0.53125,
+              "acceptedAccuracy": 0.8095238095238095,
+              "correctSuggestions": 17,
+              "knownClueCoverage": 0.65625,
+              "blankFalsePositiveRate": 0.10204081632653061,
+              "blankFalseNegativeRate": 0.1836734693877551,
+              "perClassRecall": {
+                "1": 0.0,
+                "2": 0.6666666666666666,
+                "3": 0.3333333333333333,
+                "4": 0.6,
+                "5": 1.0,
+                "6": 0.75,
+                "7": 0.0,
+                "8": 0.3333333333333333,
+                "9": null
+              },
+              "minimumClassRecall": 0.0,
+              "confusionMatrix": [
+                [
+                  0,
+                  0,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0,
+                  0,
+                  1
+                ],
+                [
+                  0,
+                  2,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  1,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  2,
+                  0,
+                  2,
+                  0,
+                  0,
+                  1,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  3,
+                  1,
+                  0,
+                  0,
+                  1,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  0,
+                  6,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  3,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0,
+                  0,
+                  1
+                ],
+                [
+                  1,
+                  0,
+                  1,
+                  0,
+                  0,
+                  0,
+                  0,
+                  1,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ]
+              ]
+            },
+            "calibrationCurve": [
+              {
+                "minimumConfidence": 0.3,
+                "maximumConfidence": 0.4,
+                "samples": 1,
+                "meanConfidence": 0.35533589124679565,
+                "accuracy": 0.0
+              },
+              {
+                "minimumConfidence": 0.6,
+                "maximumConfidence": 0.7,
+                "samples": 1,
+                "meanConfidence": 0.6627766489982605,
+                "accuracy": 0.0
+              },
+              {
+                "minimumConfidence": 0.7,
+                "maximumConfidence": 0.8,
+                "samples": 3,
+                "meanConfidence": 0.7268642783164978,
+                "accuracy": 0.0
+              },
+              {
+                "minimumConfidence": 0.8,
+                "maximumConfidence": 0.9,
+                "samples": 2,
+                "meanConfidence": 0.8422639966011047,
+                "accuracy": 0.0
+              },
+              {
+                "minimumConfidence": 0.9,
+                "maximumConfidence": 1.0,
+                "samples": 25,
+                "meanConfidence": 0.9924626350402832,
+                "accuracy": 0.68
+              }
+            ]
+          },
+          {
+            "fold": 3,
+            "training": [
+              "IMG_4229.jpg",
+              "IMG_4226.jpg"
+            ],
+            "validation": "IMG_4227.jpg",
+            "test": "IMG_4228.jpg",
+            "temperature": 2.0000000000000013,
+            "rejectThreshold": 0.8500000000000004,
+            "metrics": {
+              "digitAccuracy": 0.5,
+              "acceptedAccuracy": 1.0,
+              "correctSuggestions": 11,
+              "knownClueCoverage": 0.34375,
+              "blankFalsePositiveRate": 0.0,
+              "blankFalseNegativeRate": 0.08163265306122448,
+              "perClassRecall": {
+                "1": 0.4,
+                "2": 0.3333333333333333,
+                "3": 0.5,
+                "4": 0.5,
+                "5": 0.6,
+                "6": 0.6666666666666666,
+                "7": 0.5,
+                "8": 0.6,
+                "9": 0.3333333333333333
+              },
+              "minimumClassRecall": 0.3333333333333333,
+              "confusionMatrix": [
+                [
+                  2,
+                  0,
+                  0,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  1,
+                  0,
+                  1,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  1,
+                  0,
+                  1,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  1,
+                  0,
+                  1,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  1,
+                  0,
+                  3,
+                  0,
+                  0,
+                  0,
+                  1
+                ],
+                [
+                  0,
+                  1,
+                  0,
+                  0,
+                  0,
+                  2,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  2,
+                  0,
+                  1
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  1,
+                  1,
+                  3,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  2,
+                  0,
+                  0,
+                  1
+                ]
+              ]
+            },
+            "calibrationCurve": [
+              {
+                "minimumConfidence": 0.2,
+                "maximumConfidence": 0.3,
+                "samples": 1,
+                "meanConfidence": 0.2692273259162903,
+                "accuracy": 0.0
+              },
+              {
+                "minimumConfidence": 0.3,
+                "maximumConfidence": 0.4,
+                "samples": 5,
+                "meanConfidence": 0.33351531624794006,
+                "accuracy": 0.0
+              },
+              {
+                "minimumConfidence": 0.4,
+                "maximumConfidence": 0.5,
+                "samples": 5,
+                "meanConfidence": 0.46828803420066833,
+                "accuracy": 0.0
+              },
+              {
+                "minimumConfidence": 0.5,
+                "maximumConfidence": 0.6,
+                "samples": 2,
+                "meanConfidence": 0.5324529409408569,
+                "accuracy": 0.0
+              },
+              {
+                "minimumConfidence": 0.6,
+                "maximumConfidence": 0.7,
+                "samples": 3,
+                "meanConfidence": 0.6273994445800781,
+                "accuracy": 0.6666666666666666
+              },
+              {
+                "minimumConfidence": 0.7,
+                "maximumConfidence": 0.8,
+                "samples": 4,
+                "meanConfidence": 0.7473955154418945,
+                "accuracy": 0.5
+              },
+              {
+                "minimumConfidence": 0.8,
+                "maximumConfidence": 0.9,
+                "samples": 2,
+                "meanConfidence": 0.8419285416603088,
+                "accuracy": 1.0
+              },
+              {
+                "minimumConfidence": 0.9,
+                "maximumConfidence": 1.0,
+                "samples": 10,
+                "meanConfidence": 0.9345301389694214,
+                "accuracy": 1.0
+              }
+            ]
+          }
+        ],
+        "metrics": {
+          "digitAccuracy": 0.7578125,
+          "worstDigitAccuracy": 0.5,
+          "acceptedAccuracy": 0.9523809523809523,
+          "correctSuggestions": 99,
+          "knownClueCoverage": 0.75,
+          "blankFalsePositiveRate": 0.025510204081632654,
+          "minimumClassRecall": 0.5833333333333334
+        },
+        "exportEligible": false
       }
     ]
+  },
+  "exportEligible": false,
+  "manualOverride": {
+    "safetyGatesPassed": false,
+    "reason": "User-authorized replacement after reviewing source-photo safety metrics"
   }
 }

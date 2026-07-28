@@ -7,6 +7,7 @@ export type PuzzleToolbarProps = {
   canUndo: boolean
   notesMode: boolean
   onCheck: () => void
+  onCandidates: () => void
   onErase: () => void
   onHint: () => void
   onMore: () => void
@@ -24,7 +25,7 @@ function MoreIcon() {
 }
 
 /** Solver effects stay in the screen; this component only renders actions. */
-export function PuzzleToolbar({ canErase, canRedo, canUndo, notesMode, onCheck, onErase, onHint, onMore, onRedo, onToggleNotes, onUndo }: PuzzleToolbarProps) {
+export function PuzzleToolbar({ canErase, canRedo, canUndo, notesMode, onCandidates, onCheck, onErase, onHint, onMore, onRedo, onToggleNotes, onUndo }: PuzzleToolbarProps) {
   return <nav className="puzzle-toolbar" aria-label="Puzzle controls">
     <div className="puzzle-toolbar__group" role="group" aria-label="Entry controls">
       <Button variant="secondary" className={notesMode ? 'is-active' : ''} aria-pressed={notesMode} onClick={onToggleNotes}>Notes</Button>
@@ -35,6 +36,7 @@ export function PuzzleToolbar({ canErase, canRedo, canUndo, notesMode, onCheck, 
       <Button variant="ghost" disabled={!canRedo} onClick={onRedo}>Redo</Button>
     </div>
     <div className="puzzle-toolbar__group" role="group" aria-label="Coaching controls">
+      <Button variant="secondary" onClick={onCandidates}>Candidates</Button>
       <Button variant="secondary" onClick={onHint}>Hint</Button>
       <Button variant="secondary" onClick={onCheck}>Check</Button>
     </div>

@@ -7,7 +7,7 @@ playwright-report/
 test-results/
 .venv*/
 training-data/
-training/*
+training/**
 
 # Private local working materials; never publish these with the application source.
 /AGENTS.md

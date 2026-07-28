@@ -2,12 +2,61 @@ import type { Grid } from '../engine/types'
 import { preprocessDigit } from './digitPreprocess'
 import { recognizeDigit } from './digitModel'
 import { type GrayImage } from './grayImage'
-import { rectifyWithOpenCv } from './opencvGrid'
-import type { ScanCell, ScanResult } from './types'
+import { rectifyWithOpenCv, type SourceCorner } from './opencvGrid'
+import type { ScanCell, ScanResult, SourcePoint, SourceRegion } from './types'
 
 const mean = (values: number[]) => values.reduce((total, value) => total + value, 0) / Math.max(values.length, 1)
 
-const gridLines = (image: GrayImage, bounds: { x: number; y: number; size: number }, vertical: boolean) => {
+type Bounds = { x: number; y: number; size: number }
+
+const solveLinearSystem = (matrix: number[][], values: number[]) => {
+  const augmented = matrix.map((row, index) => [...row, values[index]])
+  for (let pivot = 0; pivot < augmented.length; pivot += 1) {
+    let best = pivot
+    for (let row = pivot + 1; row < augmented.length; row += 1) if (Math.abs(augmented[row][pivot]) > Math.abs(augmented[best][pivot])) best = row
+    if (Math.abs(augmented[best][pivot]) < 1e-9) return null
+    ;[augmented[pivot], augmented[best]] = [augmented[best], augmented[pivot]]
+    const divisor = augmented[pivot][pivot]
+    for (let column = pivot; column <= augmented.length; column += 1) augmented[pivot][column] /= divisor
+    for (let row = 0; row < augmented.length; row += 1) {
+      if (row === pivot) continue
+      const factor = augmented[row][pivot]
+      for (let column = pivot; column <= augmented.length; column += 1) augmented[row][column] -= factor * augmented[pivot][column]
+    }
+  }
+  return augmented.map((row) => row.at(-1) ?? 0)
+}
+
+/** Maps the unit square back onto the detected source quadrilateral. */
+const sourceProjector = (corners: readonly SourceCorner[]) => {
+  const unitCorners: ReadonlyArray<[number, number]> = [[0, 0], [1, 0], [1, 1], [0, 1]]
+  const matrix: number[][] = []
+  const values: number[] = []
+  unitCorners.forEach(([u, v], index) => {
+    const { x, y } = corners[index]
+    matrix.push([u, v, 1, 0, 0, 0, -x * u, -x * v]); values.push(x)
+    matrix.push([0, 0, 0, u, v, 1, -y * u, -y * v]); values.push(y)
+  })
+  const coefficients = solveLinearSystem(matrix, values)
+  if (!coefficients) return null
+  return (u: number, v: number): SourcePoint => {
+    const [a, b, c, d, e, f, g, h] = coefficients
+    const denominator = g * u + h * v + 1
+    return { x: (a * u + b * v + c) / denominator, y: (d * u + e * v + f) / denominator }
+  }
+}
+
+export const sourceRegionFor = (row: number, col: number, image: GrayImage, bounds: Bounds, sourceCorners?: readonly SourceCorner[]): SourceRegion | undefined => {
+  const project = sourceCorners ? sourceProjector(sourceCorners) : null
+  const point = (u: number, v: number) => {
+    const source = project ? project(u, v) : { x: bounds.x + u * bounds.size, y: bounds.y + v * bounds.size }
+    return { x: Math.min(1, Math.max(0, source.x / image.width)), y: Math.min(1, Math.max(0, source.y / image.height)) }
+  }
+  const left = col / 9; const top = row / 9; const right = (col + 1) / 9; const bottom = (row + 1) / 9
+  return { points: [point(left, top), point(right, top), point(right, bottom), point(left, bottom)] }
+}
+
+const gridLines = (image: GrayImage, bounds: Bounds, vertical: boolean) => {
   const average = mean([...image.pixels]); const threshold = Math.min(210, average * 0.86)
   const length = vertical ? image.width : image.height; const crossLength = vertical ? image.height : image.width
   const projection = Array.from({ length }, (_, primary) => {
@@ -54,10 +103,11 @@ const detectSquareBounds = (image: GrayImage) => {
   return { x: Math.max(0, Math.round(left + (rawWidth - size) / 2)), y: Math.max(0, Math.round(top + (rawHeight - size) / 2)), size }
 }
 
-const classifyCells = async (image: GrayImage, bounds: { x: number; y: number; size: number }): Promise<{ cells: ScanCell[]; modelReady: boolean; modelStatus?: 'production' | 'experimental' }> => {
+const classifyCells = async (image: GrayImage, sourceImage: GrayImage, bounds: Bounds, sourceCorners?: readonly SourceCorner[]): Promise<{ cells: ScanCell[]; modelReady: boolean; modelStatus?: 'production' | 'experimental'; reviewThreshold?: number }> => {
   const cells: ScanCell[] = []
   let modelReady = true
   let modelStatus: 'production' | 'experimental' | undefined
+  let reviewThreshold: number | undefined
   const verticalLines = gridLines(image, bounds, true); const horizontalLines = gridLines(image, bounds, false)
   for (let row = 0; row < 9; row += 1) for (let col = 0; col < 9; col += 1) {
     const left = verticalLines?.[col] ?? bounds.x + col * bounds.size / 9; const right = verticalLines?.[col + 1] ?? bounds.x + (col + 1) * bounds.size / 9
@@ -77,12 +127,19 @@ const classifyCells = async (image: GrayImage, bounds: { x: number; y: number; s
       pixels.push(line)
     }
     const preparation = preprocessDigit(pixels)
-    const recognition = preparation.hasInk ? await recognizeDigit(pixels) : { value: null, confidence: 1, modelReady: true }
+    // Schema-v2 digit models decide whether a cell is blank themselves. The
+    // legacy recognizer retains its local-ink gate, so this is safe for both
+    // deployed model contracts and lets a blank-aware model reject ink noise.
+    const recognition = await recognizeDigit(pixels)
     if (!recognition.modelReady) modelReady = false
     if (recognition.modelStatus) modelStatus = recognition.modelStatus
-    cells.push({ row, col, value: recognition.value, confidence: recognition.confidence, inkRatio: preparation.inkRatio })
+    if (recognition.reviewThreshold !== undefined) reviewThreshold = recognition.reviewThreshold
+    // OpenCV corners are measured in the decoded source image, not the
+    // rectified 900px working image. Keep regions in that preview coordinate
+    // system so portrait and landscape source evidence stays aligned.
+    cells.push({ row, col, value: recognition.value, confidence: recognition.confidence, inkRatio: preparation.inkRatio, sourceRegion: sourceRegionFor(row, col, sourceImage, bounds, sourceCorners) })
   }
-  return { cells, modelReady, modelStatus }
+  return { cells, modelReady, modelStatus, reviewThreshold }
 }
 
 export const scanGrayImage = async (normalized: GrayImage): Promise<ScanResult> => {
@@ -93,12 +150,13 @@ export const scanGrayImage = async (normalized: GrayImage): Promise<ScanResult> 
     grid: Array.from({ length: 9 }, () => Array(9).fill(null)), cells: [], image: { width: working.width, height: working.height, bounds: { x: 0, y: 0, size: 0 } },
     diagnostics: [{ code: 'grid-not-found', message: 'We could not find a clear square Sudoku grid. Try a brighter, closer photo.', recoverable: true }]
   }
-  const { cells, modelReady, modelStatus } = await classifyCells(working, bounds)
+  const { cells, modelReady, modelStatus, reviewThreshold } = await classifyCells(working, normalized, bounds, rectified?.sourceCorners)
   const grid: Grid = Array.from({ length: 9 }, () => Array(9).fill(null))
   cells.forEach((cell) => { grid[cell.row][cell.col] = cell.value })
   return {
     grid, cells, image: { width: working.width, height: working.height, bounds },
     modelStatus,
+    ...(reviewThreshold === undefined ? {} : { confidencePolicy: { reviewThreshold } }),
     diagnostics: [
       ...(modelReady ? [] : [{ code: 'model-unavailable' as const, message: 'The digit model is unavailable, so enter or correct the clues manually.', recoverable: true }]),
       ...(modelStatus === 'experimental' ? [{ code: 'model-experimental' as const, message: 'Experimental digit model: inspect every detected clue before confirming.', recoverable: true }] : [])

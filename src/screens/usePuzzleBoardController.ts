@@ -1,22 +1,28 @@
 import { useMemo } from 'react'
-import { getCandidates } from '../engine/candidates'
+import { effectiveCandidates, getCandidateState } from '../engine/candidates'
 import { boardValues, boxIndex, isSamePosition, peersFor } from '../engine/board'
-import type { CellPosition, Digit, SolverStep, UnitKind } from '../engine/types'
+import type { CandidateMode, CellPosition, Digit, SolverStep, UnitKind } from '../engine/types'
 import { validatePuzzle } from '../engine/validatePuzzle'
-import type { NumberPadAllowedActions, NumberPadInteractions, SudokuBoardInteractions, SudokuBoardPresentation } from '../components/puzzleViewTypes'
+import type { BoardFeedback, BoardFeedbackKind, NumberPadAllowedActions, NumberPadInteractions, SudokuBoardInteractions, SudokuBoardPresentation } from '../components/puzzleViewTypes'
 import { usePuzzleStore } from '../store/puzzleStore'
 
 type ScanReviewPresentation = {
   corrected?: readonly CellPosition[]
   pending: readonly CellPosition[]
   reviewed: readonly CellPosition[]
+  scanned?: readonly CellPosition[]
+  needsReview?: readonly CellPosition[]
+  confirmed?: readonly CellPosition[]
 }
 
 type Options = {
   notesMode: boolean
+  candidateMode?: CandidateMode
   hintStep?: SolverStep | null
   lowConfidenceCells?: readonly CellPosition[]
   scanReview?: ScanReviewPresentation
+  feedback?: BoardFeedback | null
+  onFeedback?: (kind: BoardFeedbackKind, cells: readonly CellPosition[], digits?: readonly Digit[]) => void
 }
 
 const initialPosition = { row: 0, col: 0 }
@@ -29,14 +35,15 @@ const isInUnit = (position: CellPosition, kind: UnitKind, index: number) =>
  * Adapts persisted puzzle state into the interaction and presentation data
  * consumed by the store-free puzzle views.
  */
-export function usePuzzleBoardController({ notesMode, hintStep = null, lowConfidenceCells = [], scanReview }: Options) {
+export function usePuzzleBoardController({ notesMode, candidateMode = 'manual', hintStep = null, lowConfidenceCells = [], scanReview, feedback = null, onFeedback }: Options) {
   const board = usePuzzleStore((state) => state.board)
   const selected = usePuzzleStore((state) => state.selected)
   const select = usePuzzleStore((state) => state.select)
   const setValue = usePuzzleStore((state) => state.setValue)
   const toggleNote = usePuzzleStore((state) => state.toggleNote)
   const values = useMemo(() => boardValues(board), [board])
-  const candidates = useMemo(() => getCandidates(values), [values])
+  const candidateState = useMemo(() => getCandidateState(values, board), [board, values])
+  const candidates = useMemo(() => effectiveCandidates(candidateState), [candidateState])
   const conflicts = useMemo(() => positionSet(validatePuzzle(values).conflicts), [values])
   const focused = selected ?? initialPosition
   const related = useMemo(() => selected ? positionSet(peersFor(selected)) : new Set<string>(), [selected])
@@ -50,17 +57,30 @@ export function usePuzzleBoardController({ notesMode, hintStep = null, lowConfid
   const pendingReview = useMemo(() => positionSet(scanReview?.pending ?? []), [scanReview])
   const reviewedReview = useMemo(() => positionSet(scanReview?.reviewed ?? []), [scanReview])
   const correctedReview = useMemo(() => positionSet(scanReview?.corrected ?? []), [scanReview])
+  const scannedReview = useMemo(() => positionSet(scanReview?.scanned ?? []), [scanReview])
+  const needsReview = useMemo(() => positionSet(scanReview?.needsReview ?? []), [scanReview])
+  const confirmedReview = useMemo(() => positionSet(scanReview?.confirmed ?? []), [scanReview])
 
   const presentation = useMemo<SudokuBoardPresentation>(() => ({
     cells: board.map((row, rowIndex) => row.map((cell, col) => {
       const position = { row: rowIndex, col }
       const key = positionKey(position)
       const hintTarget = Boolean(hintStep?.targetCells.some((item) => isSamePosition(item, position)))
+      const candidate = candidateState.get(key)
+      const marks = (() => {
+        if (cell.value || !candidate) return []
+        const result = new Map<Digit, 'manual' | 'generated' | 'stale' | 'removed'>()
+        candidate.manual.forEach((digit) => result.set(digit, candidate.staleManual.includes(digit) ? 'stale' : 'manual'))
+        if (candidateMode === 'guided' || candidateMode === 'automatic') candidate.generated.forEach((digit) => { if (!result.has(digit)) result.set(digit, 'generated') })
+        if (candidateMode === 'guided' || candidateMode === 'automatic') candidate.excluded.forEach((digit) => { if (!result.has(digit)) result.set(digit, 'removed') })
+        return [...result].sort(([left], [right]) => left - right).map(([digit, source]) => ({ digit, source }))
+      })()
       return {
         value: cell.value,
         fixed: Boolean(cell.given),
         notes: cell.notes,
         candidates: candidates.get(key) ?? [],
+        candidateMarks: marks,
         origin: cell.origin,
         state: {
           selected: isSamePosition(focused, position),
@@ -74,19 +94,24 @@ export function usePuzzleBoardController({ notesMode, hintStep = null, lowConfid
           invalid: conflicts.has(key),
           lowConfidence: lowConfidence.has(key),
           scanCorrected: correctedReview.has(key),
-          scanReview: pendingReview.has(key) ? 'pending' : reviewedReview.has(key) ? 'reviewed' : null
+          scanReview: needsReview.has(key) ? 'needs-review' : pendingReview.has(key) ? 'pending' : confirmedReview.has(key) ? 'confirmed' : reviewedReview.has(key) ? 'reviewed' : scannedReview.has(key) ? 'scanned' : null
         }
       }
-    }))
-  }), [board, candidates, conflicts, correctedReview, focused, hintStep, lowConfidence, matching, pendingReview, related, reviewedReview])
+    })),
+    feedback
+  }), [board, candidateMode, candidateState, candidates, conflicts, confirmedReview, correctedReview, feedback, focused, hintStep, lowConfidence, matching, needsReview, pendingReview, related, reviewedReview, scannedReview])
 
   const onEnterDigit = (position: CellPosition, digit: Digit) => {
-    if (board[position.row][position.col].given) return
+    const cell = board[position.row][position.col]
+    if (cell.given || cell.value === digit) return
     setValue(position, digit)
+    onFeedback?.('value-entered', [position], [digit])
   }
   const onToggleCandidate = (position: CellPosition, digit: Digit) => {
-    if (board[position.row][position.col].given) return
+    const cell = board[position.row][position.col]
+    if (cell.given || cell.value) return
     toggleNote(position, digit)
+    onFeedback?.(cell.notes.includes(digit) ? 'candidate-removed' : 'candidate-added', [position], [digit])
   }
   const onErase = (position: CellPosition) => {
     if (board[position.row][position.col].given) return
@@ -112,5 +137,5 @@ export function usePuzzleBoardController({ notesMode, hintStep = null, lowConfid
     onErase: () => { if (selected) onErase(selected) }
   }
 
-  return { board, selected, presentation, boardInteractions, isKeypadDisabled, allowedActions, numberPadInteractions }
+  return { board, selected, presentation, boardInteractions, isKeypadDisabled, allowedActions, numberPadInteractions, effectiveCandidateMap: candidates }
 }

@@ -2,11 +2,29 @@ import type { CellOrigin, CellPosition, Digit, Value } from '../engine/types'
 
 export type { CellPosition, Digit }
 
+export type BoardFeedbackKind =
+  | 'value-entered'
+  | 'candidate-added'
+  | 'candidate-removed'
+  | 'guided-change'
+  | 'diagnosis'
+  | 'recovered'
+  | 'reapplied'
+
+/** Ephemeral display-only feedback. It is intentionally not puzzle state. */
+export type BoardFeedback = {
+  id: number
+  kind: BoardFeedbackKind
+  cells: readonly CellPosition[]
+  digits?: readonly Digit[]
+}
+
 export type SudokuCellPresentation = {
   value: Value
   fixed: boolean
   notes: readonly Digit[]
   candidates: readonly Digit[]
+  candidateMarks?: readonly CandidateMark[]
   origin?: CellOrigin
   state: {
     selected: boolean
@@ -20,12 +38,18 @@ export type SudokuCellPresentation = {
     invalid: boolean
     lowConfidence: boolean
     scanCorrected: boolean
-    scanReview: 'pending' | 'reviewed' | null
+    scanReview: 'pending' | 'reviewed' | 'scanned' | 'needs-review' | 'confirmed' | null
   }
+}
+
+export type CandidateMark = {
+  digit: Digit
+  source: 'manual' | 'generated' | 'stale' | 'removed'
 }
 
 export type SudokuBoardPresentation = {
   cells: readonly (readonly SudokuCellPresentation[])[]
+  feedback?: BoardFeedback | null
 }
 
 export type SudokuBoardInteractions = {

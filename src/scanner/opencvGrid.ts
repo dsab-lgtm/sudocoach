@@ -1,7 +1,9 @@
 /* OpenCV publishes a generated dynamic runtime surface rather than usable TS method types. */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 type GrayImage = { pixels: Uint8ClampedArray; width: number; height: number }
-type Point = { x: number; y: number }
+export type SourceCorner = { x: number; y: number }
+type Point = SourceCorner
+export type RectifiedGrid = GrayImage & { sourceCorners: [SourceCorner, SourceCorner, SourceCorner, SourceCorner] }
 
 export const RECTIFIED_BOARD_SIZE = 900
 
@@ -40,7 +42,7 @@ const candidateScore = (cv: any, gray: any, corners: Point[], sourceArea: number
     const score = lineScore(binary.data as Uint8Array, RECTIFIED_BOARD_SIZE)
     const pixels = new Uint8ClampedArray(warped.data)
     const area = Math.abs((corners[0].x * (corners[1].y - corners[3].y) + corners[1].x * (corners[2].y - corners[0].y) + corners[2].x * (corners[3].y - corners[1].y) + corners[3].x * (corners[0].y - corners[2].y)) / 2)
-    return { score: score + 75 * area / sourceArea, pixels }
+    return { score: score + 75 * area / sourceArea, pixels, sourceCorners: ordered }
   } finally {
     from.delete(); to.delete(); matrix.delete(); warped.delete(); binary.delete()
   }
@@ -50,7 +52,7 @@ const candidateScore = (cv: any, gray: any, corners: Point[], sourceArea: number
  * Finds several plausible board contours and selects the warp whose projections
  * contain all ten horizontal and vertical Sudoku lines.
  */
-export const rectifyWithOpenCv = async (source: GrayImage): Promise<GrayImage | null> => {
+export const rectifyWithOpenCv = async (source: GrayImage): Promise<RectifiedGrid | null> => {
   try {
     const module = await import('@techstark/opencv-js')
     const loaded = ((module as { default?: unknown }).default ?? module) as { Mat?: unknown; onRuntimeInitialized?: () => void } | Promise<unknown>
@@ -87,14 +89,14 @@ export const rectifyWithOpenCv = async (source: GrayImage): Promise<GrayImage | 
         }
         contour.delete()
       }
-      let best: { score: number; pixels: Uint8ClampedArray } | null = null
+      let best: { score: number; pixels: Uint8ClampedArray; sourceCorners: [SourceCorner, SourceCorner, SourceCorner, SourceCorner] } | null = null
       for (const candidate of candidates.sort((left, right) => right.area - left.area).slice(0, 30)) {
         const result = candidateScore(cv, gray, candidate.points, source.width * source.height)
         if (!best || result.score > best.score) best = result
       }
       // A valid ten-line grid scores well above a plain quadrilateral. Refuse
       // page edges, windows, and other square objects instead of guessing.
-      return best && best.score >= 180 ? { pixels: best.pixels, width: RECTIFIED_BOARD_SIZE, height: RECTIFIED_BOARD_SIZE } : null
+      return best && best.score >= 180 ? { pixels: best.pixels, width: RECTIFIED_BOARD_SIZE, height: RECTIFIED_BOARD_SIZE, sourceCorners: best.sourceCorners } : null
     } finally {
       original.delete(); gray.delete(); blurred.delete(); thresholded.delete(); contours.delete(); hierarchy.delete()
     }

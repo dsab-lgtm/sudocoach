@@ -1,7 +1,7 @@
 import * as tf from '@tensorflow/tfjs'
 import type { Digit } from '../engine/types'
 import { preprocessDigit } from './digitPreprocess'
-import { isDigitModelMetadata, modelMatchesMetadata, type DigitModelMetadata } from './modelMetadata'
+import { isBlankAwareDigitModel, isDigitModelMetadata, modelMatchesMetadata, type DigitModelMetadata } from './modelMetadata'
 
 type LoadedDigitModel = { model: tf.LayersModel; metadata: DigitModelMetadata }
 let modelPromise: Promise<LoadedDigitModel | null> | null = null
@@ -59,28 +59,50 @@ const templateFallback = (pixels: number[][]): { value: Digit | null; confidence
   return score < 0.34 ? { value: null, confidence: Math.max(0, score) } : { value: (winner + 1) as Digit, confidence: Math.max(0, Math.min(0.72, score)) }
 }
 
-/** Classifies a cropped, grid-line-free digit. The model labels are 1 through 9. */
-export const recognizeDigit = async (pixels: number[][]): Promise<{ value: Digit | null; confidence: number; modelReady: boolean; modelStatus?: DigitModelMetadata['modelStatus'] }> => {
+const calibrated = (probabilities: ArrayLike<number>, temperature?: number) => {
+  if (!temperature || temperature === 1) return probabilities
+  const powers = Array.from(probabilities, (probability) => Math.exp(Math.log(Math.max(probability, 1e-12)) / temperature))
+  const total = powers.reduce((sum, probability) => sum + probability, 0)
+  return powers.map((probability) => probability / Math.max(total, 1e-12))
+}
+
+/** Maps calibrated probabilities to a Sudoku value while preserving a blank class when present. */
+export const recognitionForProbabilities = (metadata: DigitModelMetadata, rawProbabilities: ArrayLike<number>) => {
+  const probabilities = calibrated(rawProbabilities, metadata.calibration?.temperature)
+  let bestIndex = 0
+  for (let index = 1; index < probabilities.length; index += 1) if (probabilities[index] > probabilities[bestIndex]) bestIndex = index
+  const confidence = probabilities[bestIndex]
+  const label = metadata.labels[bestIndex]
+  return {
+    value: label === 0 || confidence < metadata.confidenceThresholds.reject ? null : label as Digit,
+    confidence
+  }
+}
+
+const predictionFor = async (loaded: LoadedDigitModel, inputValues: Float32Array) => {
+  const input = tf.tensor4d(inputValues, [1, 28, 28, 1])
+  const prediction = loaded.model.predict(input) as tf.Tensor
+  const probabilities = await prediction.data()
+  input.dispose(); prediction.dispose()
+  return recognitionForProbabilities(loaded.metadata, probabilities)
+}
+
+/** Classifies a cropped, grid-line-free Sudoku cell. Schema v2 models include a blank class. */
+export const recognizeDigit = async (pixels: number[][]): Promise<{ value: Digit | null; confidence: number; modelReady: boolean; modelStatus?: DigitModelMetadata['modelStatus']; reviewThreshold?: number }> => {
   const preprocessed = preprocessDigit(pixels)
   const loaded = await loadModel()
   if (loaded?.metadata.preprocessingVersion === 'v1') {
     const legacy = legacyPreprocess(pixels)
-    if (!Math.max(...legacy)) return { value: null, confidence: 1, modelReady: true, modelStatus: loaded.metadata.modelStatus }
-    const input = tf.tensor4d(legacy, [1, 28, 28, 1]); const prediction = loaded.model.predict(input) as tf.Tensor
-    const probabilities = await prediction.data(); input.dispose(); prediction.dispose()
-    let bestIndex = 0
-    for (let index = 1; index < probabilities.length; index += 1) if (probabilities[index] > probabilities[bestIndex]) bestIndex = index
-    const confidence = probabilities[bestIndex]
-    return { value: confidence >= loaded.metadata.confidenceThresholds.reject ? (bestIndex + 1) as Digit : null, confidence, modelReady: true, modelStatus: loaded.metadata.modelStatus }
+    if (!Math.max(...legacy)) return { value: null, confidence: 1, modelReady: true, modelStatus: loaded.metadata.modelStatus, reviewThreshold: loaded.metadata.confidenceThresholds.review }
+    const recognition = await predictionFor(loaded, legacy)
+    return { ...recognition, modelReady: true, modelStatus: loaded.metadata.modelStatus, reviewThreshold: loaded.metadata.confidenceThresholds.review }
   }
-  if (!preprocessed.hasInk) return { value: null, confidence: 1, modelReady: true }
+  if (loaded && isBlankAwareDigitModel(loaded.metadata)) {
+    const recognition = await predictionFor(loaded, preprocessed.input)
+    return { ...recognition, modelReady: true, modelStatus: loaded.metadata.modelStatus, reviewThreshold: loaded.metadata.confidenceThresholds.review }
+  }
+  if (!preprocessed.hasInk) return { value: null, confidence: 1, modelReady: true, ...(loaded ? { modelStatus: loaded.metadata.modelStatus, reviewThreshold: loaded.metadata.confidenceThresholds.review } : {}) }
   if (!loaded) return { ...templateFallback(pixels), modelReady: false }
-  const input = tf.tensor4d(preprocessed.input, [1, 28, 28, 1])
-  const prediction = loaded.model.predict(input) as tf.Tensor
-  const probabilities = await prediction.data()
-  input.dispose(); prediction.dispose()
-  let bestIndex = 0
-  for (let index = 1; index < probabilities.length; index += 1) if (probabilities[index] > probabilities[bestIndex]) bestIndex = index
-  const confidence = probabilities[bestIndex]
-  return { value: confidence >= loaded.metadata.confidenceThresholds.reject ? (bestIndex + 1) as Digit : null, confidence, modelReady: true, modelStatus: loaded.metadata.modelStatus }
+  const recognition = await predictionFor(loaded, preprocessed.input)
+  return { ...recognition, modelReady: true, modelStatus: loaded.metadata.modelStatus, reviewThreshold: loaded.metadata.confidenceThresholds.review }
 }

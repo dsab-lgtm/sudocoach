@@ -29,6 +29,7 @@ export function HomeScreen() {
       <h1 id="home-title">A clearer way to solve Sudoku.</h1>
       <p>SudoCoach helps you solve, understand, and improve at Sudoku.</p>
       <StatusBadge tone="accent">Offline-ready</StatusBadge>
+      <StatusBadge tone="accent">Image recognition baked in</StatusBadge>
     </header>
     {savedPuzzle && <ResumePuzzleCard record={savedPuzzle} onResume={resumePuzzle}/>}
     <section className="home-start" aria-labelledby="home-start-title">
@@ -36,6 +37,7 @@ export function HomeScreen() {
       <div className="home-start__actions">
         <HomeActionCard kind="scan" title="Scan puzzle" description="Capture a printed Sudoku and review the clues." to="/camera"/>
         <HomeActionCard kind="manual" title="Enter manually" description="Add the given clues yourself." to="/manual"/>
+        <HomeActionCard kind="practice" title="Practice techniques" description="Learn one explainable Sudoku technique at a time." to="/practice"/>
       </div>
     </section>
   </section>

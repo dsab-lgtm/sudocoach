@@ -8,6 +8,9 @@ export default defineConfig({
     sourcemap: false
   },
   worker: { format: 'es' },
+  server: {
+    allowedHosts: ['focusing-bench-detector-ratio.trycloudflare.com']
+  },
   preview: {
     allowedHosts: ['.trycloudflare.com']
   },

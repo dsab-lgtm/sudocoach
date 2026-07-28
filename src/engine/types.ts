@@ -6,11 +6,18 @@ export type Grid = Value[][]
 export type CellPosition = { row: number; col: number }
 export type UnitKind = 'row' | 'column' | 'box'
 export type CellOrigin = 'scan' | 'manual' | 'hint' | 'solution'
+export type CandidateMode = 'manual' | 'cleanup' | 'guided' | 'automatic'
+export type SolutionStatus = 'unknown' | 'unique' | 'ambiguous' | 'unsolvable' | 'invalid'
 
 export type BoardCell = {
   given: Value
   value: Value
+  /** Player-authored pencil notes. These are never rewritten by the assistant. */
   notes: Digit[]
+  /** Candidate removals the player explicitly accepted from an explained step. */
+  assistantExcluded?: Digit[]
+  /** Monotonic sequence used only to explain which entered value came first. */
+  valueEntrySequence?: number
   origin?: CellOrigin
 }
 export type Board = BoardCell[][]

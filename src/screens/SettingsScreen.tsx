@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { AboutPanel } from '../components/AboutPanel'
 import { Button } from '../components/Button'
+import { CandidateModeControl } from '../components/CandidateModeControl'
+import { useCandidateAssistant } from '../components/candidateAssistantContext'
 import { Modal } from '../components/Modal'
 import { SettingsSection } from '../components/SettingsSection'
 import { ThemeControl } from '../components/ThemeControl'
@@ -10,6 +12,7 @@ import { useThemePreference } from '../styles/themePreferenceContext'
 
 export function SettingsScreen() {
   const { error: themeError, isLoading, setTheme, theme } = useThemePreference()
+  const { error: candidateError, isLoading: candidateLoading, mode: candidateMode, setMode } = useCandidateAssistant()
   const [clearOpen, setClearOpen] = useState(false)
   const [clearError, setClearError] = useState<string | null>(null)
   const [clearStatus, setClearStatus] = useState<string | null>(null)
@@ -40,6 +43,14 @@ export function SettingsScreen() {
 
     <SettingsSection title="Appearance" description="Choose a theme that suits your environment.">
       <Surface className="settings-card" elevation="raised"><ThemeControl theme={theme} disabled={isLoading} onChange={(nextTheme) => { void setTheme(nextTheme) }}/>{isLoading && <p className="settings-inline-status" role="status">Loading saved appearance preference...</p>}{themeError && <p className="settings-inline-error" role="alert">{themeError}</p>}</Surface>
+    </SettingsSection>
+
+    <SettingsSection title="Solving assistance" description="Choose how candidate numbers support your own pencil notes.">
+      <Surface className="settings-card" elevation="raised">
+        <CandidateModeControl disabled={candidateLoading} mode={candidateMode} onChange={(nextMode) => { void setMode(nextMode) }}/>
+        {candidateLoading && <p className="settings-inline-status" role="status">Loading candidate preference...</p>}
+        {candidateError && <p className="settings-inline-error" role="alert">{candidateError}</p>}
+      </Surface>
     </SettingsSection>
 
     <SettingsSection title="Data and privacy" description="Your saved puzzles stay on this device. Clearing them cannot be undone.">

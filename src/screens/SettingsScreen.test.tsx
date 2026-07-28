@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ThemePreferenceProvider } from '../components/ThemePreferenceProvider'
+import { CandidateAssistantProvider } from '../components/CandidateAssistantProvider'
 import { database } from '../storage/database'
 import { SettingsScreen } from './SettingsScreen'
 
@@ -16,7 +17,7 @@ const putSetting = vi.mocked(database.settings.put)
 const clearPuzzles = vi.mocked(database.puzzles.clear)
 
 function renderSettings() {
-  return render(<ThemePreferenceProvider><SettingsScreen/></ThemePreferenceProvider>)
+  return render(<ThemePreferenceProvider><CandidateAssistantProvider><SettingsScreen/></CandidateAssistantProvider></ThemePreferenceProvider>)
 }
 
 beforeEach(() => {
@@ -37,6 +38,8 @@ describe('SettingsScreen', () => {
     renderSettings()
     expect(await screen.findByRole('heading', { name: 'Settings' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Appearance' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Solving assistance' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Candidate assistance')).toHaveValue('manual')
     expect(screen.getByRole('heading', { name: 'Data and privacy' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'About' })).toBeInTheDocument()
     expect(screen.getByText('Offline-ready')).toBeInTheDocument()

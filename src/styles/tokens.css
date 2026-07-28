@@ -51,10 +51,16 @@
   --border-subtle: var(--border-width) solid var(--color-border);
   --shadow-sm: 0 2px 8px rgba(13, 27, 42, .08);
   --shadow-md: 0 16px 40px rgba(13, 27, 42, .16);
+  --duration-instant: 80ms;
   --duration-fast: 120ms;
   --duration-standard: 180ms;
-  --duration-slow: 240ms;
-  --easing-standard: ease;
+  --duration-emphasis: 220ms;
+  --duration-slow: var(--duration-emphasis);
+  --easing-standard: cubic-bezier(.2, 0, .2, 1);
+  --easing-enter: cubic-bezier(0, 0, .2, 1);
+  --easing-press: cubic-bezier(.2, 0, 0, 1);
+  --motion-distance-sm: 4px;
+  --motion-distance-md: 8px;
   --z-base: 0;
   --z-floating: 10;
   --z-modal: 30;

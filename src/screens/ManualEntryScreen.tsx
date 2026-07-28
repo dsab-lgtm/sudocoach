@@ -6,7 +6,7 @@ import { NumberPad } from '../components/NumberPad'
 import { PuzzleWorkspace } from '../components/PuzzleWorkspace'
 import { SudokuBoard } from '../components/SudokuBoard'
 import { emptyGrid } from '../engine/board'
-import { findSolutions } from '../engine/fullSolver'
+import { analyzeSolutions, findSolutions } from '../engine/fullSolver'
 import { validatePuzzle } from '../engine/validatePuzzle'
 import { usePuzzleStore } from '../store/puzzleStore'
 import { usePuzzleBoardController } from './usePuzzleBoardController'
@@ -44,7 +44,7 @@ export function ManualEntryScreen() {
       return
     }
     setPuzzle(grid)
-    usePuzzleStore.getState().setSolution(solution[0])
+    usePuzzleStore.getState().setSolution(solution[0], analyzeSolutions(grid).status)
     select({ row: 0, col: 0 })
     navigate('/solve')
   }
