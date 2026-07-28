@@ -1,9 +1,60 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
+import { AboutPanel } from '../components/AboutPanel'
+import { Button } from '../components/Button'
+import { Modal } from '../components/Modal'
+import { SettingsSection } from '../components/SettingsSection'
+import { ThemeControl } from '../components/ThemeControl'
+import { Surface } from '../components/Surface'
 import { database } from '../storage/database'
+import { useThemePreference } from '../styles/themePreferenceContext'
 
 export function SettingsScreen() {
-  const [theme, setTheme] = useState<'system' | 'light' | 'dark'>('system')
-  useEffect(() => { document.documentElement.dataset.theme = theme; database.settings.put({ key: 'theme', value: theme }).catch(() => undefined) }, [theme])
-  const clear = async () => { if (window.confirm('Delete all saved puzzles from this device?')) await database.puzzles.clear() }
-  return <section className="settings"><p className="eyebrow">Preferences</p><h1>Settings</h1><label>Theme<select value={theme} onChange={(event) => setTheme(event.target.value as typeof theme)}><option value="system">Use device setting</option><option value="light">Light</option><option value="dark">Dark</option></select></label><label className="setting-toggle"><span>Automatic candidate notes</span><input type="checkbox" defaultChecked/></label><label>Default hint level<select defaultValue="1"><option value="1">Direction</option><option value="2">Explanation</option><option value="3">Reveal move</option></select></label><button type="button" className="danger-outline" onClick={clear}>Clear saved puzzles</button></section>
+  const { error: themeError, isLoading, setTheme, theme } = useThemePreference()
+  const [clearOpen, setClearOpen] = useState(false)
+  const [clearError, setClearError] = useState<string | null>(null)
+  const [clearStatus, setClearStatus] = useState<string | null>(null)
+  const [clearing, setClearing] = useState(false)
+
+  const closeClearModal = () => {
+    if (clearing) return
+    setClearError(null)
+    setClearOpen(false)
+  }
+
+  const clearSavedPuzzles = async () => {
+    setClearing(true)
+    setClearError(null)
+    try {
+      await database.puzzles.clear()
+      setClearOpen(false)
+      setClearStatus('Saved puzzles cleared from this device.')
+    } catch {
+      setClearError('Saved puzzles could not be cleared. Try again.')
+    } finally {
+      setClearing(false)
+    }
+  }
+
+  return <section className="settings-screen" aria-labelledby="settings-title">
+    <header className="settings-screen__header"><p className="eyebrow">Preferences</p><h1 id="settings-title">Settings</h1><p>Choose how SudoCoach appears and manage the puzzles saved on this device.</p></header>
+
+    <SettingsSection title="Appearance" description="Choose a theme that suits your environment.">
+      <Surface className="settings-card" elevation="raised"><ThemeControl theme={theme} disabled={isLoading} onChange={(nextTheme) => { void setTheme(nextTheme) }}/>{isLoading && <p className="settings-inline-status" role="status">Loading saved appearance preference...</p>}{themeError && <p className="settings-inline-error" role="alert">{themeError}</p>}</Surface>
+    </SettingsSection>
+
+    <SettingsSection title="Data and privacy" description="Your saved puzzles stay on this device. Clearing them cannot be undone.">
+      <Surface className="settings-card settings-data-action">
+        <div><h3>Clear saved puzzles</h3><p id="clear-saved-puzzles-description">Remove every saved puzzle record from this device. Your theme preference, current unsaved puzzle, and scanner session stay unchanged.</p></div>
+        <Button variant="danger" aria-describedby="clear-saved-puzzles-description" onClick={() => { setClearStatus(null); setClearOpen(true) }}>Clear saved puzzles</Button>
+      </Surface>
+      {clearStatus && <p className="settings-inline-status" role="status">{clearStatus}</p>}
+    </SettingsSection>
+
+    <SettingsSection title="About"><AboutPanel/></SettingsSection>
+
+    {clearOpen && <Modal title="Clear saved puzzles?" description="This permanently removes all saved puzzle records from this device. Your theme preference, current unsaved puzzle, and scanner session stay unchanged." onClose={closeClearModal}>
+      {clearError && <p className="settings-modal-error" role="alert">{clearError}</p>}
+      <div className="modal-actions"><Button variant="secondary" disabled={clearing} onClick={closeClearModal}>Cancel</Button><Button variant="danger" disabled={clearing} onClick={() => { void clearSavedPuzzles() }}>{clearing ? 'Clearing...' : 'Clear saved puzzles'}</Button></div>
+    </Modal>}
+  </section>
 }

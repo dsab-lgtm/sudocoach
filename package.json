@@ -1,5 +1,6 @@
 {
   "name": "sudocoach",
+  "description": "SudoCoach is an offline Sudoku scanner, solver, and learning assistant.",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -9,7 +10,9 @@
     "preview": "vite preview",
     "lint": "eslint . --max-warnings=0",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "verify:public-surface": "node scripts/verifyPublicSurface.mjs"
   },
   "dependencies": {
     "@techstark/opencv-js": "^5.0.0-release.1",
@@ -24,6 +27,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.19.0",
+    "@playwright/test": "^1.57.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.2.0",
     "@types/node": "^22.10.7",

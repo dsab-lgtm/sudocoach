@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title">
+<title id="title">SudoCoach logo mark</title>
+
+  <g fill="none" stroke="#0D1B2A" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="18" y="18" width="92" height="92" rx="18" stroke-width="6"/>
+    <path d="M48 18V110M80 18V110M18 48H110M18 80H110" stroke-width="3.5"/>
+    <rect x="80" y="48" width="30" height="32" fill="#D4AF37" stroke="none"/>
+    <path d="M34 96H54C63 96 68 91 68 82V73C68 67 73 62 79 62H92" stroke-width="6"/>
+    <circle cx="34" cy="96" r="6.5" fill="#F7F4ED" stroke-width="4"/>
+  </g>
+
+</svg>

@@ -1,6 +1,12 @@
 import { Link, useLocation } from 'react-router-dom'
+import { AppNavigation } from './AppNavigation'
+import { BrandLogo } from './BrandLogo'
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const location = useLocation()
-  return <main className="app-shell"><header className="topbar"><Link className="brand" to="/">Sudo<span>Scan</span></Link><nav aria-label="Primary"><Link className={location.pathname === '/settings' ? 'selected' : ''} to="/settings">Settings</Link></nav></header>{children}</main>
+  const puzzleRoute = ['/solve', '/manual', '/review'].includes(location.pathname)
+  return <main className={`app-shell ${puzzleRoute ? 'app-shell--puzzle' : 'app-shell--standard'}`}>
+    {!puzzleRoute && <header className="topbar"><Link className="brand" to="/" aria-label="SudoCoach home"><BrandLogo/></Link><AppNavigation pathname={location.pathname}/></header>}
+    {children}
+  </main>
 }

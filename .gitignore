@@ -3,8 +3,16 @@ node_modules/
 dist/
 .vite/
 coverage/
+playwright-report/
+test-results/
 .venv*/
 training-data/
+
+# Private local working materials; never publish these with the application source.
+/AGENTS.md
+/.agents/
+/.codex/
+/docs/design/
 
 # Python bytecode
 __pycache__/

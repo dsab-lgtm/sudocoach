@@ -1,9 +1,9 @@
 import { fireEvent, render, screen } from '@testing-library/react'
-import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it } from 'vitest'
+import { TestRouter } from '../test/TestRouter'
 import { TrainingAnnotationScreen } from './TrainingAnnotationScreen'
 
-const renderScreen = () => render(<MemoryRouter><TrainingAnnotationScreen /></MemoryRouter>)
+const renderScreen = () => render(<TestRouter><TrainingAnnotationScreen /></TestRouter>)
 const cell = (row: number, column: number) => screen.getByRole('gridcell', { name: new RegExp(`Row ${row}, column ${column}`) })
 
 describe('TrainingAnnotationScreen keyboard controls', () => {

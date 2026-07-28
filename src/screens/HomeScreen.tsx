@@ -1,12 +1,42 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { mostRecentPuzzle } from '../storage/database'
+import { useNavigate } from 'react-router-dom'
+import { HomeActionCard } from '../components/HomeActionCard'
+import { ResumePuzzleCard } from '../components/ResumePuzzleCard'
+import { StatusBadge } from '../components/StatusBadge'
+import { mostRecentPuzzle, type PuzzleRecord } from '../storage/database'
 import { usePuzzleStore } from '../store/puzzleStore'
 
 export function HomeScreen() {
-  const [hasSaved, setHasSaved] = useState(false)
+  const navigate = useNavigate()
+  const [savedPuzzle, setSavedPuzzle] = useState<PuzzleRecord | null>(null)
   const restore = usePuzzleStore((state) => state.restore)
-  useEffect(() => { mostRecentPuzzle().then((record) => setHasSaved(Boolean(record))).catch(() => setHasSaved(false)) }, [])
-  const continuePuzzle = async () => { const record = await mostRecentPuzzle(); if (record) restore(record) }
-  return <section className="hero"><p className="eyebrow">Private · offline · on-device</p><h1>Turn a printed puzzle into your next move.</h1><p className="lede">Scan a Sudoku, review anything uncertain, then solve at your own pace.</p><div className="hero-actions"><Link className="primary-action" to="/camera">Scan puzzle</Link><Link className="secondary-action" to="/manual">Enter manually</Link>{hasSaved && <Link className="text-button" to="/solve" onClick={continuePuzzle}>Continue saved puzzle</Link>}</div><section className="privacy-note"><strong>Your photos stay on this device.</strong><span>We discard the source image after you confirm the puzzle.</span></section></section>
+
+  useEffect(() => {
+    let current = true
+    mostRecentPuzzle().then((record) => { if (current) setSavedPuzzle(record ?? null) }).catch(() => { if (current) setSavedPuzzle(null) })
+    return () => { current = false }
+  }, [])
+
+  const resumePuzzle = () => {
+    if (!savedPuzzle) return
+    restore(savedPuzzle)
+    navigate('/solve')
+  }
+
+  return <section className="home-screen" aria-labelledby="home-title">
+    <header className="home-hero">
+      <p className="eyebrow">SudoCoach</p>
+      <h1 id="home-title">A clearer way to solve Sudoku.</h1>
+      <p>SudoCoach helps you solve, understand, and improve at Sudoku.</p>
+      <StatusBadge tone="accent">Offline-ready</StatusBadge>
+    </header>
+    {savedPuzzle && <ResumePuzzleCard record={savedPuzzle} onResume={resumePuzzle}/>}
+    <section className="home-start" aria-labelledby="home-start-title">
+      <div><p className="eyebrow">Start a puzzle</p><h2 id="home-start-title">Choose your setup</h2></div>
+      <div className="home-start__actions">
+        <HomeActionCard kind="scan" title="Scan puzzle" description="Capture a printed Sudoku and review the clues." to="/camera"/>
+        <HomeActionCard kind="manual" title="Enter manually" description="Add the given clues yourself." to="/manual"/>
+      </div>
+    </section>
+  </section>
 }
