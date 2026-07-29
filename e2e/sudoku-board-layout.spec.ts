@@ -57,3 +57,48 @@ test('keeps every Sudoku cell the same size after entering a clue', async ({ pag
   expectUniformCells(before)
   expectUniformCells(after)
 })
+
+test('keeps the Solver header inside the safe workspace without page scrolling', async ({ page }, testInfo) => {
+  await page.goto('/#/solve')
+
+  const header = page.locator('.solver-workspace .workspace-header')
+  const board = page.getByRole('grid', { name: 'Sudoku puzzle' })
+  const dock = page.locator('.solver-workspace .workspace-dock')
+
+  await expect(header).toBeVisible()
+  await expect(board).toBeVisible()
+  await expect(dock).toBeVisible()
+
+  const before = await page.evaluate(() => {
+    const shell = document.querySelector<HTMLElement>('.app-shell')
+    const workspace = document.querySelector<HTMLElement>('.solver-workspace')
+    const header = document.querySelector<HTMLElement>('.solver-workspace .workspace-header')
+    const scrollRoot = document.scrollingElement
+    if (!shell || !workspace || !header || !scrollRoot) throw new Error('Solver workspace is unavailable.')
+
+    const shellRect = shell.getBoundingClientRect()
+    const headerRect = header.getBoundingClientRect()
+    const shellStyle = window.getComputedStyle(shell)
+    return {
+      documentHeight: scrollRoot.scrollHeight,
+      viewportHeight: window.innerHeight,
+      headerTop: headerRect.top,
+      safeContentTop: shellRect.top + Number.parseFloat(shellStyle.paddingTop),
+      shellMinHeight: shellStyle.minHeight,
+      workspaceHeight: workspace.getBoundingClientRect().height,
+      shellContentHeight: shell.clientHeight - Number.parseFloat(shellStyle.paddingTop) - Number.parseFloat(shellStyle.paddingBottom)
+    }
+  })
+
+  await page.evaluate(() => window.scrollTo({ top: 1000, behavior: 'instant' }))
+  const after = await page.evaluate(() => ({ scrollY: window.scrollY, headerTop: document.querySelector<HTMLElement>('.solver-workspace .workspace-header')?.getBoundingClientRect().top }))
+
+  await page.screenshot({ path: testInfo.outputPath('solver-safe-header.png'), fullPage: false })
+
+  expect(before.documentHeight).toBeLessThanOrEqual(before.viewportHeight)
+  expect(before.shellMinHeight).toBe('0px')
+  expect(before.workspaceHeight).toBeCloseTo(before.shellContentHeight, 1)
+  expect(before.headerTop).toBeGreaterThanOrEqual(before.safeContentTop - 0.5)
+  expect(after.scrollY).toBe(0)
+  expect(after.headerTop).toBeCloseTo(before.headerTop, 1)
+})

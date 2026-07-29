@@ -95,6 +95,20 @@ describe('SudokuBoard keyboard controls', () => {
     expect(given).toHaveFocus()
   })
 
+  it('keeps a selection-only board keyboard navigable without presenting cells as editable', () => {
+    const controls = interactions()
+    render(<SudokuBoard presentation={presentation({ '0:0': { state: { selected: true } } })} interactions={controls} selectionOnly/>)
+    const first = cell(1, 1)
+    first.focus()
+    fireEvent.keyDown(first, { key: 'ArrowRight' })
+    fireEvent.keyDown(cell(1, 2), { key: '6' })
+
+    expect(controls.onSelect).toHaveBeenLastCalledWith({ row: 0, col: 1 })
+    expect(controls.onEnterDigit).not.toHaveBeenCalled()
+    expect(first).toHaveAccessibleName('Row 1, column 1, empty, selectable')
+    expect(first).toHaveAttribute('aria-readonly', 'true')
+  })
+
   it('renders supplied hint states and removed candidates without deriving engine state', () => {
     const { container } = render(<SudokuBoard presentation={presentation({
       '0:0': { notes: [1, 2], state: { selected: true, hintTarget: true, hintUnit: true, removedCandidates: [1, 2] } },

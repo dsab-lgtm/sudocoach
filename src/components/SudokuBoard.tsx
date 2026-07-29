@@ -13,9 +13,13 @@ export type SudokuBoardProps = {
   showCandidates?: boolean
   mode?: 'default' | 'scan-review'
   density?: 'standard' | 'compact'
+  /** Keeps board navigation and selection available while suppressing value edits. */
+  selectionOnly?: boolean
+  /** Practice has a coach-side answer reveal, so it does not need an in-cell badge over candidate marks. */
+  showHintMarker?: boolean
 }
 
-export function SudokuBoard({ presentation, interactions, readOnly = false, notesMode = false, nativeNumericInput = false, autoAdvance = true, showCandidates = false, mode = 'default', density = 'standard' }: SudokuBoardProps) {
+export function SudokuBoard({ presentation, interactions, readOnly = false, notesMode = false, nativeNumericInput = false, autoAdvance = true, showCandidates = false, mode = 'default', density = 'standard', selectionOnly = false, showHintMarker = true }: SudokuBoardProps) {
   const cellRefs = useRef<Array<HTMLElement | null>>([])
   const focusCell = (position: CellPosition) => {
     interactions.onSelect(position)
@@ -30,6 +34,7 @@ export function SudokuBoard({ presentation, interactions, readOnly = false, note
   const onKeyDown = (position: CellPosition, event: KeyboardEvent<HTMLElement>) => {
     const arrows: Record<string, [number, number]> = { ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1] }
     if (arrows[event.key]) { event.preventDefault(); move(position, ...arrows[event.key]); return }
+    if (selectionOnly) return
     if (event.key.toLowerCase() === 'n') { event.preventDefault(); interactions.onToggleNotes?.(); return }
     const keypadDigit = /^Numpad([1-9])$/.exec(event.code)?.[1]
     const digit = /^[1-9]$/.test(event.key) ? event.key : keypadDigit
@@ -47,7 +52,7 @@ export function SudokuBoard({ presentation, interactions, readOnly = false, note
   }
 
   const onNativeInput = (position: CellPosition, event: ChangeEvent<HTMLInputElement>) => {
-    if (readOnly || presentation.cells[position.row][position.col].fixed) return
+    if (selectionOnly || readOnly || presentation.cells[position.row][position.col].fixed) return
     const entered = event.currentTarget.value.slice(-1)
     if (!entered) {
       interactions.onErase(position)
@@ -69,7 +74,7 @@ export function SudokuBoard({ presentation, interactions, readOnly = false, note
       ].filter(Boolean).join(' ')
       const marks = cell.candidateMarks ?? []
       const notes = marks.length ? marks.map((mark) => mark.digit) : cell.notes.length ? cell.notes : (showCandidates ? cell.candidates : [])
-      const cellStateLabel = cell.fixed ? 'fixed clue' : readOnly ? 'read-only' : 'editable'
+      const cellStateLabel = cell.fixed ? 'fixed clue' : readOnly ? 'read-only' : selectionOnly ? 'selectable' : 'editable'
       const candidateLabel = !value && notes.length ? `, candidate values ${marks.length ? marks.map(({ digit, source }) => source === 'manual' ? digit : `${digit} ${source === 'stale' ? 'stale manual' : source === 'removed' ? 'guided removal' : 'generated'}`).join(', ') : notes.join(', ')}` : ''
       const scannedLabel = cell.origin === 'scan' || state.scanReview || state.scanCorrected ? ', scanned clue' : ''
       const correctedLabel = state.scanCorrected ? ', corrected' : ''
@@ -94,7 +99,7 @@ export function SudokuBoard({ presentation, interactions, readOnly = false, note
             className={`native-board-input ${className}`}
             aria-label={`Enter digit for ${label}`}
             aria-selected={state.selected}
-            aria-readonly={Boolean(cell.fixed || readOnly)}
+            aria-readonly={Boolean(cell.fixed || readOnly || selectionOnly)}
             aria-invalid={state.invalid || undefined}
             disabled={readOnly || cell.fixed}
             inputMode="numeric"
@@ -106,12 +111,12 @@ export function SudokuBoard({ presentation, interactions, readOnly = false, note
             onKeyDown={(event) => onKeyDown(position, event)}
             onChange={(event) => onNativeInput(position, event)}
           />
-          {content}{removalOverlay}{feedbackCue}{state.hintTarget && <span className="hint-cell-marker" aria-hidden="true">Hint</span>}{state.scanCorrected && <span className="scan-correction" aria-hidden="true">Edited</span>}{(state.scanReview === 'reviewed' || state.scanReview === 'confirmed') && <span className="scan-check" aria-hidden="true">✓</span>}
+          {content}{removalOverlay}{feedbackCue}{showHintMarker && state.hintTarget && <span className="hint-cell-marker" aria-hidden="true">Hint</span>}{state.scanCorrected && <span className="scan-correction" aria-hidden="true">Edited</span>}{(state.scanReview === 'reviewed' || state.scanReview === 'confirmed') && <span className="scan-check" aria-hidden="true">✓</span>}
         </label>
       }
 
-      return <button key={`${rowIndex}-${col}`} type="button" role="gridcell" ref={(element) => { cellRefs.current[rowIndex * 9 + col] = element }} disabled={readOnly} onClick={() => interactions.onSelect(position)} onKeyDown={(event) => onKeyDown(position, event)} tabIndex={state.selected ? 0 : -1} aria-selected={state.selected} aria-readonly={Boolean(cell.fixed || readOnly)} aria-invalid={state.invalid || undefined} aria-label={label} className={className}>
-        {content}{removalOverlay}{feedbackCue}{state.hintTarget && <span className="hint-cell-marker" aria-hidden="true">Hint</span>}{state.scanCorrected && <span className="scan-correction" aria-hidden="true">Edited</span>}{(state.scanReview === 'reviewed' || state.scanReview === 'confirmed') && <span className="scan-check" aria-hidden="true">✓</span>}
+      return <button key={`${rowIndex}-${col}`} type="button" role="gridcell" ref={(element) => { cellRefs.current[rowIndex * 9 + col] = element }} disabled={readOnly} onClick={() => interactions.onSelect(position)} onKeyDown={(event) => onKeyDown(position, event)} tabIndex={state.selected ? 0 : -1} aria-selected={state.selected} aria-readonly={Boolean(cell.fixed || readOnly || selectionOnly)} aria-invalid={state.invalid || undefined} aria-label={label} className={className}>
+        {content}{removalOverlay}{feedbackCue}{showHintMarker && state.hintTarget && <span className="hint-cell-marker" aria-hidden="true">Hint</span>}{state.scanCorrected && <span className="scan-correction" aria-hidden="true">Edited</span>}{(state.scanReview === 'reviewed' || state.scanReview === 'confirmed') && <span className="scan-check" aria-hidden="true">✓</span>}
       </button>
     }))}
   </div>

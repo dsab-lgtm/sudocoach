@@ -245,8 +245,24 @@
 }
 
 @media (max-width: 619px) {
+  /* Solver is an app-like workspace: its safe header must never become document content. */
+  html:has(.solver-workspace),
+  body:has(.solver-workspace) {
+    height: 100svh;
+    min-height: 0;
+    overflow: hidden;
+    overscroll-behavior-y: none;
+  }
+  #root:has(.solver-workspace),
+  .app-shell:has(.solver-workspace) {
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+    overscroll-behavior-y: none;
+  }
   .app-shell:has(.solver-workspace) .solver-workspace {
-    height: calc(100svh - max(20px, env(safe-area-inset-top)) - max(32px, env(safe-area-inset-bottom)));
+    height: 100%;
+    min-height: 0;
   }
   .solver-workspace .workspace-board-area > .board {
     width: min(100cqi, 100cqb, 520px);
@@ -728,13 +744,76 @@
 .practice-catalog__choices { display: grid; gap: var(--space-3); }
 .practice-catalog__choices h2 { margin: var(--space-1) 0 0; color: var(--color-text); font-size: clamp(1.38rem, 4vw, 1.8rem); letter-spacing: -.035em; }
 .practice-catalog__grid { display: grid; gap: var(--space-3); }
-.practice-session__header h1 { margin: 0; }
-.practice-session__header { display: flex; align-items: start; justify-content: space-between; gap: var(--space-3); }
-.practice-session__header p { margin-bottom: 0; }
-.practice-dock { display: grid; gap: var(--space-3); }
-.practice-dock__actions { display: flex; gap: var(--space-2); justify-content: center; }
+.practice-catalog__group { display: grid; gap: var(--space-3); }
+.practice-catalog__group-heading h3, .practice-catalog__group-heading p { margin: 0; }
+.practice-catalog__group-heading h3 { color: var(--color-text); font-size: 1.05rem; }
+.practice-catalog__group-heading p { margin-top: var(--space-1); color: var(--color-text-muted); font-size: .9rem; line-height: var(--line-height-body); }
+.practice-lesson { display: grid; gap: var(--space-5); width: min(100%, 1120px); margin: 0 auto; padding: var(--space-6) 0 var(--space-8); }
+.practice-lesson__header { display: flex; align-items: start; justify-content: space-between; gap: var(--space-4); }
+.practice-lesson__header h1, .practice-coach h2 { margin: 0; color: var(--color-text); letter-spacing: -.045em; line-height: var(--line-height-tight); }
+.practice-lesson__header h1 { max-width: 14ch; font-size: clamp(2.1rem, 9vw, 3.5rem); }
+.practice-lesson__header p:not(.eyebrow) { max-width: 38rem; margin: var(--space-2) 0 0; color: var(--color-text-muted); line-height: var(--line-height-body); }
+.practice-lesson__header > a { flex: 0 0 auto; min-height: 44px; padding: var(--space-2) 0; color: var(--color-text-muted); font-weight: var(--font-weight-semibold); }
+.practice-lesson__body { display: grid; gap: var(--space-4); align-items: start; }
+.practice-lesson__board { display: grid; gap: var(--space-3); min-width: 0; }
+.practice-lesson__board .board { width: min(100%, 520px); margin: 0 auto; border: var(--border-strong-width) solid var(--color-navy); border-radius: var(--radius-md); background: var(--color-navy); box-shadow: var(--shadow-md); }
+.practice-lesson__board .board-cell { background: var(--color-surface); color: var(--color-text); font-weight: var(--font-weight-medium); }
+.practice-lesson__board .board-cell.is-given { font-weight: var(--font-weight-display); }
+.practice-lesson__board .board-cell.is-selected { z-index: 2; background: color-mix(in srgb, var(--color-accent) 22%, var(--color-surface)); box-shadow: inset 0 0 0 3px var(--color-navy), inset 0 0 0 5px var(--color-accent); }
+.practice-lesson__board .board-cell.is-hint-unit { background: color-mix(in srgb, var(--color-success) 19%, var(--color-surface)); }
+.practice-lesson__board .board-cell.is-hint-supporting { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--color-success) 72%, var(--color-navy)); }
+.practice-lesson__board .board-cell.is-hint-target { z-index: 3; background: color-mix(in srgb, var(--color-accent) 26%, var(--color-surface)); outline: 2px solid var(--color-accent); outline-offset: -5px; box-shadow: inset 0 0 0 3px var(--color-navy), inset 0 0 0 6px var(--color-accent); animation: none; }
+.practice-lesson__board .board-cell.is-hint-revealed { color: var(--color-accent); font-weight: var(--font-weight-display); }
+.practice-lesson__board .notes { color: var(--color-text-muted); font-weight: var(--font-weight-semibold); }
+.practice-lesson__board .notes .is-candidate-removed { color: var(--color-error); }
+.practice-lesson__board-help { max-width: 520px; margin: 0 auto; color: var(--color-text-muted); font-size: var(--font-size-label); line-height: 1.4; text-align: center; }
+.practice-lesson__coach { min-width: 0; }
+.practice-coach { display: grid; gap: var(--space-4); padding: var(--space-5); border: var(--border-subtle); border-radius: var(--radius-lg); background: var(--color-surface-elevated); }
+.practice-coach__heading { display: flex; align-items: start; justify-content: space-between; gap: var(--space-3); }
+.practice-coach__heading .eyebrow { margin: 0 0 var(--space-1); }
+.practice-coach h2 { font-size: 1.45rem; text-transform: capitalize; }
+.practice-coach > p { margin: 0; color: var(--color-text-muted); line-height: var(--line-height-body); }
+.practice-coach__count { flex: 0 0 auto; padding: 6px 9px; border: var(--border-subtle); border-radius: var(--radius-pill); color: var(--color-text-muted); font-size: var(--font-size-label); font-weight: var(--font-weight-semibold); }
+.practice-coach__task { color: var(--color-text) !important; font-weight: var(--font-weight-semibold); }
+.practice-coach__invariant { margin: 0; color: var(--color-text-muted); font-size: .92rem; line-height: var(--line-height-body); }
+.practice-coach__primer { display: grid; gap: var(--space-1); padding: var(--space-3); border: 1px solid color-mix(in srgb, var(--color-success) 58%, var(--color-border)); border-radius: var(--radius-sm); background: color-mix(in srgb, var(--color-success) 10%, var(--color-surface)); }
+.practice-coach__primer strong { color: var(--color-text); font-size: var(--font-size-label); text-transform: uppercase; letter-spacing: .08em; }
+.practice-coach__primer p, .practice-coach__next-scan { margin: 0; color: var(--color-text-muted); font-size: .9rem; line-height: var(--line-height-body); }
+.practice-coach__next-scan strong { color: var(--color-text); }
+.practice-coach__units { display: grid; gap: var(--space-2); }
+.practice-coach__units > span { color: var(--color-text-muted); font-size: var(--font-size-label); font-weight: var(--font-weight-semibold); text-transform: uppercase; letter-spacing: .08em; }
+.practice-coach__units > div, .practice-coach__legend { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.practice-coach__units b { display: inline-flex; align-items: center; min-height: 28px; padding: 0 var(--space-2); border: var(--border-subtle); border-radius: var(--radius-pill); color: var(--color-text); font-size: var(--font-size-label); }
+.practice-coach__legend { color: var(--color-text-muted); font-size: var(--font-size-label); }
+.practice-coach__legend span { display: inline-flex; align-items: center; gap: 6px; }
+.practice-coach__legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; }
+.practice-coach__legend-unit { background: color-mix(in srgb, var(--color-success) 40%, var(--color-surface)); }
+.practice-coach__legend-evidence { border: 2px solid color-mix(in srgb, var(--color-success) 72%, var(--color-navy)); }
+.practice-coach__legend-target { border: 2px solid var(--color-accent); background: color-mix(in srgb, var(--color-accent) 24%, var(--color-surface)); }
+.practice-coach__clue { padding: var(--space-3); border-left: 3px solid var(--color-accent); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; background: color-mix(in srgb, var(--color-accent) 10%, var(--color-surface)); }
+.practice-coach__clue span { color: var(--color-text-muted); font-size: var(--font-size-label); font-weight: var(--font-weight-semibold); text-transform: uppercase; letter-spacing: .08em; }
+.practice-coach__clue p { margin: var(--space-1) 0 0; color: var(--color-text); line-height: var(--line-height-body); }
+.practice-coach__actions, .practice-lesson__next { display: grid; gap: var(--space-2); }
+.practice-coach__actions .ui-button, .practice-lesson__next .ui-button { width: 100%; justify-content: center; }
+.practice-lesson__next { margin-top: var(--space-3); }
+.practice-focus-tray { display: none; }
+
+@media (max-width: 480px) {
+  .practice-focus-tray { display: grid; gap: var(--space-3); max-width: 520px; margin: 0 auto; padding: var(--space-3); border: var(--border-subtle); border-radius: var(--radius-md); background: var(--color-surface-elevated); }
+  .practice-focus-tray .eyebrow, .practice-focus-tray h2 { margin: 0; }
+  .practice-focus-tray h2 { color: var(--color-text); font-size: 1rem; letter-spacing: -.02em; }
+  .practice-focus-tray__cells { display: grid; grid-template-columns: repeat(auto-fit, minmax(72px, 1fr)); gap: var(--space-2); }
+  .practice-focus-tray__cells > div { display: grid; gap: 2px; min-height: 52px; padding: var(--space-2); border: 1px solid color-mix(in srgb, var(--color-success) 60%, var(--color-border)); border-radius: var(--radius-sm); background: color-mix(in srgb, var(--color-success) 9%, var(--color-surface)); }
+  .practice-focus-tray__cells span { color: var(--color-text-muted); font-size: .68rem; font-weight: var(--font-weight-semibold); }
+  .practice-focus-tray__cells strong { color: var(--color-text); font-size: 1.05rem; letter-spacing: .05em; }
+  .practice-focus-tray__cells .is-removed { border-color: color-mix(in srgb, var(--color-error) 60%, var(--color-border)); }
+  .practice-focus-tray__cells .is-removed strong { color: var(--color-error); text-decoration: line-through; }
+}
 
 @media (min-width: 768px) {
+  .app-shell:has(.practice-lesson) { width: min(100%, 1180px); }
+  .practice-lesson__body { grid-template-columns: minmax(0, 1fr) minmax(300px, 360px); gap: var(--space-6); }
+  .practice-lesson__coach { position: sticky; top: var(--space-4); }
   .settings-screen { padding-top: var(--space-7); }
   .settings-data-action { grid-template-columns: minmax(0, 1fr) auto; align-items: end; }
   .settings-data-action .ui-button { width: auto; }

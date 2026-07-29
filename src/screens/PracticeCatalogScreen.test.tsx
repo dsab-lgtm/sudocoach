@@ -9,7 +9,9 @@ describe('PracticeCatalogScreen', () => {
     render(<TestRouter><PracticeCatalogScreen/></TestRouter>)
 
     expect(screen.getByRole('heading', { name: 'Learn a technique, one move at a time.' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Start a focused exercise' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Learn the next useful pattern' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Foundations' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Candidate patterns' })).toBeInTheDocument()
 
     for (const exercise of practiceExercises) {
       const link = screen.getByRole('link', { name: new RegExp(exercise.title) })
