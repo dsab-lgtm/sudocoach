@@ -16,12 +16,9 @@ type ReviewHeaderProps = {
 }
 
 export function ReviewHeader({ diagnostics, error, gridDetected, noCluesDetected, onBack, reviewedCount, detectedCount, addedCount, unresolvedCount }: ReviewHeaderProps) {
-  const message = detectedCount ? `${reviewedCount} of ${detectedCount} reviewed` : 'No scanned clues yet'
-
   return <TaskHeader
     eyebrow="Review scan"
     title="Check clues"
-    description={<span role="status" aria-live="polite">{message}</span>}
     backAction={{ label: 'Back to home', onClick: onBack }}
     feedback={<>
       {error && <p className="form-error" role="alert">{error}</p>}

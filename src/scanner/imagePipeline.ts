@@ -163,8 +163,7 @@ export const scanGrayImage = async (normalized: GrayImage, onProgress?: ScanProg
     modelStatus,
     ...(reviewThreshold === undefined ? {} : { confidencePolicy: { reviewThreshold } }),
     diagnostics: [
-      ...(modelReady ? [] : [{ code: 'model-unavailable' as const, message: 'The digit model is unavailable, so enter or correct the clues manually.', recoverable: true }]),
-      ...(modelStatus === 'experimental' ? [{ code: 'model-experimental' as const, message: 'Experimental digit model: inspect every detected clue before confirming.', recoverable: true }] : [])
+      ...(modelReady ? [] : [{ code: 'model-unavailable' as const, message: 'The digit model is unavailable, so enter or correct the clues manually.', recoverable: true }])
     ]
   }
 }

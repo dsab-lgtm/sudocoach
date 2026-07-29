@@ -1,6 +1,6 @@
 import type { CellPosition, Digit, Grid } from '../engine/types'
 
-export type ScanErrorCode = 'grid-not-found' | 'low-quality-image' | 'unsupported-image' | 'cancelled' | 'model-unavailable' | 'model-experimental'
+export type ScanErrorCode = 'grid-not-found' | 'low-quality-image' | 'unsupported-image' | 'cancelled' | 'model-unavailable'
 export type SourcePoint = { x: number; y: number }
 /** A normalized, clockwise quadrilateral in the original source image. */
 export type SourceRegion = { points: [SourcePoint, SourcePoint, SourcePoint, SourcePoint] }

@@ -17,6 +17,7 @@ describe('scanner grid segmentation', () => {
     const result = await scanGrayImage({ pixels, width: size, height: size })
     expect(result.cells).toHaveLength(81)
     expect(result.grid[2][2]).toBe(6)
+    expect(result.diagnostics).not.toContainEqual(expect.objectContaining({ code: 'model-experimental' }))
     expect(result.grid[0][0]).toBeNull()
     const region = result.cells[0].sourceRegion
     expect(region?.points[0]).toEqual({ x: 0, y: 0 })

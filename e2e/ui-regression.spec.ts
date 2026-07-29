@@ -101,6 +101,21 @@ for (const viewport of viewports.slice(0, 2)) {
   })
 }
 
+for (const viewport of viewports.slice(0, 2)) {
+  test(`scan review keeps the action dock and rescan reachable at ${viewport.width}px`, async ({ page }) => {
+    await prepare(page)
+    await page.setViewportSize(viewport)
+    await page.goto('/#/__e2e__/review')
+    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight))
+
+    await expect(page.getByRole('button', { name: 'Confirm value' })).toBeVisible()
+    const rescan = page.getByRole('button', { name: 'Rescan puzzle' })
+    await expect(rescan).toBeVisible()
+    await rescan.click()
+    await expect(page).toHaveURL(/#\/camera$/)
+  })
+}
+
 test('destructive confirmation is an alert dialog and restores focus', async ({ page }) => {
   await prepare(page)
   await page.goto('/#/settings')

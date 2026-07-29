@@ -44,6 +44,7 @@ export function SourceImagePanel({ cells, previewUrl, selected, onSelectCell, va
   const selectedCell = useMemo(() => selected ? cells.find((cell) => cell.row === selected.row && cell.col === selected.col) : undefined, [cells, selected])
   const selectedRegion = selectedCell?.sourceRegion
   const crop = selectedRegion ? contextBounds(selectedRegion) : null
+  const cropPoints = selectedRegion && crop ? selectedRegion.points.map((point) => `${(point.x - crop.left) / crop.width},${(point.y - crop.top) / crop.height}`).join(' ') : null
   const hasGeometry = cells.some((cell) => cell.sourceRegion)
   const label = selectedLabel(selected)
 
@@ -73,14 +74,15 @@ export function SourceImagePanel({ cells, previewUrl, selected, onSelectCell, va
   return <section className="source-image-panel source-image-panel--selected-inspector" aria-label="Selected clue inspector">
     <div className="source-image-panel__crop" style={{ aspectRatio: crop ? `${sourceAspect * crop.width} / ${crop.height}` : sourceAspect }}>
       <img src={previewUrl} alt={selectedRegion ? `Source context for ${label.toLowerCase()}` : 'Original Sudoku photo used for this scan'} onLoad={(event) => setSourceAspect(event.currentTarget.naturalWidth / event.currentTarget.naturalHeight)} style={crop ? { width: `${100 / crop.width}%`, height: 'auto', left: `${-crop.left / crop.width * 100}%`, top: `${-crop.top / crop.height * 100}%` } : undefined}/>
+      {cropPoints && <svg className="source-image-panel__crop-region" viewBox="0 0 1 1" preserveAspectRatio="none" aria-hidden="true"><polygon points={cropPoints}/></svg>}
     </div>
     <div className="source-image-panel__selected-detail">
       <p className="eyebrow">Selected clue</p>
       <strong>{label}</strong>
       {selectedCell?.value ? <span>Scanned as {selectedCell.value} · {Math.round(selectedCell.confidence * 100)}% confidence</span> : <span>{selectedRegion ? 'No digit detected in this cell' : 'Compare this cell in the original image'}</span>}
-      <Button variant="ghost" onClick={() => setShowPhotoDetail(true)}>View full image</Button>
+      <Button variant="secondary" onClick={() => setShowPhotoDetail(true)}>View full image</Button>
     </div>
     {!selectedRegion && <p className="source-image-panel__detail" role="status">Exact cell mapping is unavailable; this is the full source image.</p>}
-    {showPhotoDetail && <PhotoComparisonSheet previewUrl={previewUrl} selectedRegion={selectedRegion} selectedLabel={selectedRegion ? label.toLowerCase() : undefined} onClose={() => setShowPhotoDetail(false)}/>} 
+    {showPhotoDetail && <PhotoComparisonSheet previewUrl={previewUrl} selectedRegion={selectedRegion} selectedLabel={selectedRegion ? label.toLowerCase() : undefined} onClose={() => setShowPhotoDetail(false)}/>}
   </section>
 }

@@ -175,6 +175,6 @@ export function ScanReviewScreen() {
         onNext={selectNext}
         onRedo={redo}
         onUndo={undo}
-      /><Button variant="ghost" onClick={() => discardScan('/camera')}>Rescan puzzle</Button></div>}
+      /><Button className="scan-review-rescan" variant="secondary" onClick={() => discardScan('/camera')}>Rescan puzzle</Button></div>}
   />
 }

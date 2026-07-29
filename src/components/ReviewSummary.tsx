@@ -1,5 +1,3 @@
-import { StatusBadge } from './StatusBadge'
-
 type ReviewSummaryProps = {
   detected: number
   reviewed: number
@@ -8,10 +6,5 @@ type ReviewSummaryProps = {
 }
 
 export function ReviewSummary({ detected, reviewed, added, unresolved }: ReviewSummaryProps) {
-  return <div className="review-summary" role="status" aria-label="Scan review status">
-    <StatusBadge tone="neutral"><strong>{detected}</strong> scanned</StatusBadge>
-    <StatusBadge tone="neutral"><strong>{added}</strong> added</StatusBadge>
-    <StatusBadge tone="success"><strong>{reviewed}</strong> confirmed</StatusBadge>
-    <StatusBadge tone={unresolved ? 'warning' : 'success'}><strong>{unresolved}</strong> to review</StatusBadge>
-  </div>
+  return <p className="review-summary" role="status" aria-label="Scan review status"><strong>{reviewed} / {detected} confirmed</strong><span aria-hidden="true"> · </span><span>{unresolved} remaining</span>{added > 0 && <><span aria-hidden="true"> · </span><span>{added} added</span></>}</p>
 }

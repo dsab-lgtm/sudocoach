@@ -15,6 +15,7 @@ describe('SourceImagePanel', () => {
     fireEvent.click(screen.getByRole('button', { name: 'View full image' }))
     expect(screen.getByRole('dialog', { name: 'Compare with original photo' })).toBeInTheDocument()
     expect(document.querySelector('.photo-comparison-sheet__image polygon')).toHaveAttribute('points', '0.2,0.2 0.3,0.2 0.3,0.3 0.2,0.3')
+    expect(document.querySelector('.source-image-panel__crop-region polygon')).toHaveAttribute('points', '0.3333333333333333,0.3333333333333333 0.6666666666666666,0.3333333333333333 0.6666666666666666,0.6666666666666666 0.3333333333333333,0.6666666666666666')
     fireEvent.click(screen.getByRole('button', { name: 'Zoom in' }))
     expect(screen.getByRole('status')).toHaveTextContent('125% zoom')
     fireEvent.click(screen.getByRole('button', { name: 'Reset zoom' }))
