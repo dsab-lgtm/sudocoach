@@ -16,7 +16,11 @@ export type ScanResult = {
   confidencePolicy?: { reviewThreshold: number }
 }
 
+export type ScanProgressStage = 'decoding' | 'grid-detection' | 'recognizing' | 'preparing-review'
+export type ScanProgress = { stage: ScanProgressStage; completed?: number; total?: number }
+export type ScanProgressListener = (progress: ScanProgress) => void
+
 export type ScannerRequest = { id: string; type: 'scan'; image: { width: number; height: number; pixels: ArrayBuffer } }
 export type ScannerCancel = { id: string; type: 'cancel' }
 export type ScannerMessage = ScannerRequest | ScannerCancel
-export type ScannerResponse = { id: string; type: 'result'; result: ScanResult } | { id: string; type: 'error'; error: string }
+export type ScannerResponse = { id: string; type: 'progress'; progress: ScanProgress } | { id: string; type: 'result'; result: ScanResult } | { id: string; type: 'error'; error: string }

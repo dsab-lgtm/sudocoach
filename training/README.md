@@ -62,8 +62,19 @@ four-photo manifest has been validated, run the experimental four-fold pipeline:
 ```
 
 This intentionally ships `modelStatus: "experimental"`. The app shows a
-persistent warning and requires every model-predicted clue to be reviewed before
-confirmation. Production export remains protected by the 97%/95% quality gate.
+persistent warning. High-confidence unedited suggestions can be explicitly
+accepted in a labelled batch, while lower-confidence, low-ink, edited, and
+manually added clues still require individual confirmation. Production export
+remains protected by the 97%/95% quality gate.
+
+### Local scan smoke test
+
+`training-data/prepared/IMG_4229.jpg` is the consented local smoke image for
+reviewing the scanner and comparison viewer after scanner UI changes. Start the
+development app, scan that image, verify that its detected clues appear in the
+review queue, and inspect a selected clue in the full-image viewer at 320px and
+390px widths. Do not add the image or its derived cells to automated fixtures or
+version control.
 
 ## Improved experimental candidates
 

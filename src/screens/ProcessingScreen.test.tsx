@@ -41,7 +41,7 @@ describe('ProcessingScreen', () => {
     renderProcessing()
 
     expect(screen.getByRole('heading', { name: 'Reading your Sudoku' })).toBeInTheDocument()
-    expect(screen.getByRole('status')).toHaveTextContent('Your image is being processed on this device.')
+    expect(screen.getByRole('status')).toHaveTextContent('Decoding your photo on this device.')
     expect(screen.getByRole('img', { name: `Selected puzzle image: ${file.name}` })).toHaveAttribute('src', 'blob:selected-image')
     expect(screen.getByText('Find the puzzle grid')).toBeInTheDocument()
     expect(screen.queryByText(/worker|OpenCV|TensorFlow|model/i)).not.toBeInTheDocument()
@@ -127,5 +127,18 @@ describe('ProcessingScreen', () => {
     expect(signal?.aborted).toBe(true)
     await act(async () => resolveScan(photographedPuzzleScanResult))
     expect(scannerSession.getResult()).toBeNull()
+  })
+
+  it('announces scanner stages as they are reported', async () => {
+    setPendingFile()
+    let resolveScan: (value: typeof photographedPuzzleScanResult) => void = () => undefined
+    mockScanFile.mockImplementation((_file, _signal, onProgress) => {
+      onProgress?.({ stage: 'recognizing', completed: 12, total: 81 })
+      return new Promise((resolve) => { resolveScan = resolve })
+    })
+    renderProcessing()
+
+    expect(await screen.findByRole('status')).toHaveTextContent('Reading clues 12 of 81.')
+    await act(async () => resolveScan(photographedPuzzleScanResult))
   })
 })

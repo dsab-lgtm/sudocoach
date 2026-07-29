@@ -38,7 +38,7 @@
 
 .ui-surface { border: var(--border-subtle); border-radius: var(--radius-lg); background: var(--color-surface); }.ui-surface--raised { background: var(--color-surface-elevated); box-shadow: var(--shadow-md); }
 .ui-status-badge { display: inline-flex; align-items: center; gap: var(--space-1); min-height: 28px; padding: 0 var(--space-2); border: var(--border-width) solid var(--color-border); border-radius: var(--radius-pill); color: var(--color-text-muted); font-size: var(--font-size-label); font-weight: var(--font-weight-semibold); line-height: 1; }.ui-status-badge__icon { display: inline-flex; }.ui-status-badge--accent { border-color: color-mix(in srgb, var(--color-accent) 65%, var(--color-border)); color: var(--color-text); }.ui-status-badge--success { border-color: color-mix(in srgb, var(--color-success) 82%, var(--color-border)); background: color-mix(in srgb, var(--color-success) 28%, var(--color-surface)); color: var(--color-text); }.ui-status-badge--warning { border-color: color-mix(in srgb, var(--color-warning) 72%, var(--color-border)); background: color-mix(in srgb, var(--color-warning) 16%, var(--color-surface)); color: var(--color-text); }.ui-status-badge--error { border-color: color-mix(in srgb, var(--color-error) 72%, var(--color-border)); background: color-mix(in srgb, var(--color-error) 16%, var(--color-surface)); color: var(--color-text); }
-.ui-modal-backdrop { position: fixed; inset: 0; z-index: var(--z-modal); display: grid; place-items: end center; padding: var(--space-5); background: rgba(13, 27, 42, .62); }.ui-modal { width: min(100%, 470px); outline: none; }.ui-modal__surface { padding: var(--space-5); }.ui-modal h2 { margin: 0; font-size: 1.35rem; line-height: var(--line-height-tight); }.ui-modal__description { margin: var(--space-3) 0 0; color: var(--color-text-muted); line-height: var(--line-height-body); }.ui-modal .modal-actions { margin-top: var(--space-5); }.ui-modal .wide + .wide { margin-top: var(--space-2); }
+.ui-modal-backdrop { position: fixed; inset: 0; z-index: var(--z-modal); display: grid; place-items: end center; padding: var(--space-5); background: rgba(13, 27, 42, .62); }.ui-modal { width: min(calc(100vw - 2 * var(--space-5)), 470px); max-height: calc(100svh - 2 * var(--space-5)); outline: none; }.ui-modal__surface { max-height: inherit; padding: var(--space-5); overflow: auto; }.ui-modal h2 { margin: 0; font-size: 1.35rem; line-height: var(--line-height-tight); }.ui-modal__description { margin: var(--space-3) 0 0; color: var(--color-text-muted); line-height: var(--line-height-body); }.ui-modal .modal-actions { margin-top: var(--space-5); }.ui-modal .wide + .wide { margin-top: var(--space-2); }
 @media (min-width: 620px) { .ui-modal-backdrop { place-items: center; } }
 
 /* Solver-only workspace: the board leads, while controls remain within reach. */
@@ -288,7 +288,7 @@
 
 .review-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2); }
 .review-actions .ui-button { width: 100%; min-width: 0; min-height: 44px; padding: 0 var(--space-2); font-size: .8rem; }
-.review-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-1); width: min(100%, 520px); margin: 0; }
+.review-summary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-1); width: min(100%, 520px); margin: 0; }
 .review-summary .ui-status-badge { justify-content: center; min-width: 0; padding: 0 var(--space-1); font-size: .68rem; white-space: nowrap; }
 .review-summary strong { margin-right: 2px; color: var(--color-text); }
 .scan-confidence-legend { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-1); margin: 0; color: var(--color-text-muted); font-size: .68rem; font-style: normal; line-height: 1.15; }
@@ -310,10 +310,13 @@
 .scan-correction { position: absolute; bottom: 2px; left: 2px; z-index: 3; padding: 2px 3px; border: var(--border-width) solid var(--color-navy); border-radius: 4px; background: var(--color-accent); color: var(--color-accent-ink); font-size: .48rem; font-weight: var(--font-weight-display); letter-spacing: .01em; line-height: 1; pointer-events: none; text-transform: uppercase; }
 .review-workspace .scan-check { border: var(--border-width) solid var(--color-navy); background: var(--color-success); color: var(--color-navy); }
 
-.ui-modal:has(.photo-comparison-sheet) { width: min(100%, 720px); }
+.ui-modal:has(.photo-comparison-sheet) { width: min(calc(100vw - 2 * var(--space-5)), 720px); }
 .photo-comparison-sheet { display: grid; gap: var(--space-2); margin-top: var(--space-4); }
-.photo-comparison-sheet__actions { display: flex; justify-content: end; }
-.photo-comparison-sheet img { display: block; width: 100%; max-height: min(64svh, 620px); border: var(--border-subtle); border-radius: var(--radius-md); object-fit: contain; background: var(--color-navy); }
+.photo-comparison-sheet__actions { position: sticky; top: 0; z-index: 1; display: flex; justify-content: end; gap: var(--space-1); padding-block: var(--space-1); background: var(--color-surface); }
+.photo-comparison-sheet__zoom-status { margin: 0; color: var(--color-text-muted); font-size: var(--font-size-label); }
+.photo-comparison-sheet__viewport { display: grid; max-height: min(56svh, 620px); overflow: auto; border: var(--border-subtle); border-radius: var(--radius-md); background: var(--color-navy); touch-action: none; }
+.photo-comparison-sheet__image { transform-origin: center; transition: transform var(--duration-fast) var(--easing-standard); }
+.photo-comparison-sheet img { display: block; width: 100%; max-height: none; border: 0; border-radius: var(--radius-md); object-fit: contain; background: var(--color-navy); }
 
 @media (max-width: 619px) {
   .app-shell:has(.entry-workspace) .entry-workspace,
@@ -577,6 +580,7 @@
 .board--scan-review .board-cell.is-selected { z-index: 2; outline: 3px solid var(--color-navy); outline-offset: -4px; box-shadow: inset 0 0 0 2px var(--color-accent); }
 .board--scan-review .board-cell.is-conflict { background: var(--color-surface); color: var(--color-text); text-decoration: underline wavy var(--color-error) 2px; text-underline-offset: .16em; }
 .board--scan-review .scan-correction { display: none; }
+.board--scan-review .scan-added { position: absolute; right: 2px; bottom: 2px; padding: 2px 3px; border-radius: 3px; background: var(--color-success); color: var(--color-navy); font-size: .45rem; font-weight: var(--font-weight-display); line-height: 1; text-transform: uppercase; }
 
 .source-image-panel { min-width: 0; }
 .source-image-panel__heading .eyebrow, .source-image-panel__selected-detail .eyebrow { margin: 0 0 2px; color: var(--color-text-muted); }

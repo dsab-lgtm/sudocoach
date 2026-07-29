@@ -3,10 +3,11 @@ import type { SolutionStatus } from '../engine/types'
 type ScanValidationSummaryProps = {
   hasClues: boolean
   hasConflicts: boolean
+  hasRiskItems: boolean
   status: SolutionStatus | 'checking'
 }
 
-export function ScanValidationSummary({ hasClues, hasConflicts, status }: ScanValidationSummaryProps) {
+export function ScanValidationSummary({ hasClues, hasConflicts, hasRiskItems, status }: ScanValidationSummaryProps) {
   const detail = !hasClues
     ? ['neutral', 'Add the starting clues you can see in the photo.'] as const
     : hasConflicts || status === 'invalid'
@@ -14,7 +15,7 @@ export function ScanValidationSummary({ hasClues, hasConflicts, status }: ScanVa
       : status === 'checking'
         ? ['neutral', 'Checking whether the clues form one puzzle…'] as const
         : status === 'unsolvable'
-          ? ['error', 'These clues cannot form a Sudoku. Check the highlighted values.'] as const
+          ? ['error', hasRiskItems ? 'These clues cannot form a Sudoku. Recheck added, edited, and lower-confidence clues.' : 'These clues cannot form a Sudoku. Recheck the source photo before continuing.'] as const
           : status === 'ambiguous'
             ? ['warning', 'More verified clues are needed; these clues allow multiple solutions.'] as const
             : status === 'unique'

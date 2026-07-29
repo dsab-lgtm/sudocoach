@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from 'vitest'
 
-vi.mock('./digitModel', () => ({ recognizeDigit: vi.fn(async (pixels: number[][]) => {
+vi.mock('./digitModel', () => ({ recognizeDigits: vi.fn(async (cells: readonly number[][][]) => cells.map((pixels) => {
   const hasInk = pixels.some((row) => row.some((pixel) => pixel < 100))
   return hasInk ? { value: 6, confidence: 0.99, modelReady: true, modelStatus: 'experimental' } : { value: null, confidence: .98, modelReady: true, modelStatus: 'experimental' }
-}) }))
+})) }))
 
 import { scanGrayImage, sourceRegionFor } from './imagePipeline'
 
@@ -48,10 +48,25 @@ describe('scanner grid segmentation', () => {
     const pixels = new Uint8ClampedArray(size * size).fill(255)
     for (let line = 0; line <= 9; line += 1) for (let point = 0; point < size; point += 1) pixels[point * size + line * 20] = pixels[line * 20 * size + point] = 0
     for (let y = 44; y < 56; y += 1) for (let x = 44; x < 52; x += 1) pixels[y * size + x] = 0
-    const { recognizeDigit } = await import('./digitModel')
-    vi.mocked(recognizeDigit).mockResolvedValue({ value: null, confidence: .97, modelReady: true, modelStatus: 'experimental' })
+    const { recognizeDigits } = await import('./digitModel')
+    vi.mocked(recognizeDigits).mockImplementation(async (cells) => cells.map(() => ({ value: null, confidence: .97, modelReady: true, modelStatus: 'experimental' })))
     const result = await scanGrayImage({ pixels, width: size, height: size })
     expect(result.grid[2][2]).toBeNull()
     expect(result.cells.find((cell) => cell.row === 2 && cell.col === 2)?.inkRatio).toBeGreaterThan(0)
+  })
+
+  it('reports grid detection, batched recognition, and review preparation in order', async () => {
+    const size = 180
+    const pixels = new Uint8ClampedArray(size * size).fill(255)
+    for (let line = 0; line <= 9; line += 1) for (let point = 0; point < size; point += 1) pixels[point * size + line * 20] = pixels[line * 20 * size + point] = 0
+    const { recognizeDigits } = await import('./digitModel')
+    vi.mocked(recognizeDigits).mockImplementation(async (cells) => cells.map(() => ({ value: null, confidence: .98, modelReady: true, modelStatus: 'experimental' })))
+    const progress: string[] = []
+
+    await scanGrayImage({ pixels, width: size, height: size }, (event) => progress.push(`${event.stage}:${event.completed ?? ''}`))
+
+    expect(vi.mocked(recognizeDigits)).toHaveBeenCalledWith(expect.any(Array))
+    expect(vi.mocked(recognizeDigits).mock.calls.at(-1)?.[0]).toHaveLength(81)
+    expect(progress).toEqual(['grid-detection:', 'recognizing:0', 'recognizing:81', 'preparing-review:'])
   })
 })

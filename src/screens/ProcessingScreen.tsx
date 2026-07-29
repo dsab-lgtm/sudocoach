@@ -7,6 +7,7 @@ import { Surface } from '../components/Surface'
 import { TaskHeader } from '../components/TaskHeader'
 import { scanFile } from '../scanner/client'
 import { scannerSession } from '../scanner/session'
+import type { ScanProgress } from '../scanner/types'
 
 const recoveryMessage = 'We could not read this puzzle image. Try another clear photo, or enter the clues manually.'
 
@@ -20,6 +21,7 @@ export function ProcessingScreen({ scan = scanFile }: ProcessingScreenProps) {
   const failureRef = useRef<HTMLDivElement>(null)
   const [attempt, setAttempt] = useState(0)
   const [failed, setFailed] = useState(false)
+  const [progress, setProgress] = useState<ScanProgress>({ stage: 'decoding' })
   const file = scannerSession.getFile()
 
   useEffect(() => {
@@ -32,8 +34,9 @@ export function ProcessingScreen({ scan = scanFile }: ProcessingScreenProps) {
     const controller = new AbortController()
     scannerSession.clearError()
     setFailed(false)
+    setProgress({ stage: 'decoding' })
 
-    scan(file, controller.signal).then((result) => {
+    scan(file, controller.signal, (next) => { if (active && !controller.signal.aborted) setProgress(next) }).then((result) => {
       if (!active || controller.signal.aborted) return
       scannerSession.setResult(result)
       scannerSession.clearError()
@@ -63,6 +66,6 @@ export function ProcessingScreen({ scan = scanFile }: ProcessingScreenProps) {
     <TaskHeader eyebrow="Scan a puzzle" title="Processing image" description="Your image stays on this device while SudoCoach reads the grid." backAction={{ label: 'Back to camera', onClick: () => navigate('/camera') }}/>
     {failed
       ? <div ref={failureRef} role="alert" tabIndex={-1}><Surface className="processing-failure" elevation="raised"><p className="eyebrow">Scan needs another look</p><h1 id="processing-title">We could not read this image</h1><p>{recoveryMessage}</p><ScanRecoveryActions onRetry={() => setAttempt((value) => value + 1)} onChooseAnother={() => navigate('/camera')} onEnterManually={enterManually}/></Surface></div>
-      : <><ProcessingStatus fileName={file.name} previewUrl={scannerSession.preview()}/><Button variant="ghost" className="processing-cancel" onClick={() => navigate('/camera')}>Cancel and return to camera</Button></>}
+      : <><ProcessingStatus fileName={file.name} previewUrl={scannerSession.preview()} progress={progress}/><Button variant="ghost" className="processing-cancel" onClick={() => navigate('/camera')}>Cancel and return to camera</Button></>}
   </section>
 }

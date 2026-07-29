@@ -60,12 +60,14 @@ export function SourceImagePanel({ cells, previewUrl, selected, onSelectCell, va
   if (variant === 'reference') return <section className="source-image-panel source-image-panel--reference" aria-label="Original scan comparison">
     <div className="source-image-panel__heading">
       <div><p className="eyebrow">Source image</p><strong>{label}</strong></div>
+      <Button variant="ghost" onClick={() => setShowPhotoDetail(true)}>Open photo viewer</Button>
     </div>
     <div className="source-image-panel__reference-image" onPointerDown={selectImageRegion} style={{ aspectRatio: sourceAspect }}>
       <img src={previewUrl} alt="Original Sudoku photo used for this scan" onLoad={(event) => setSourceAspect(event.currentTarget.naturalWidth / event.currentTarget.naturalHeight)}/>
       {selectedRegion && <svg className="source-image-panel__region" viewBox="0 0 1 1" preserveAspectRatio="none" aria-hidden="true"><polygon points={selectedRegion.points.map((point) => `${point.x},${point.y}`).join(' ')}/></svg>}
     </div>
-    <p className="source-image-panel__detail" role="status">{hasGeometry ? `Highlighted source area matches ${label.toLowerCase()}. Tap another mapped cell to compare it.` : 'Exact cell mapping is unavailable for this scan.'}</p>
+    <p className="source-image-panel__detail" role="status">{hasGeometry ? `Highlighted source area matches ${label.toLowerCase()}. Select a board cell or tap the photo to compare it.` : 'Exact cell mapping is unavailable for this scan.'}</p>
+    {showPhotoDetail && <PhotoComparisonSheet previewUrl={previewUrl} selectedRegion={selectedRegion} selectedLabel={selectedRegion ? label.toLowerCase() : undefined} onClose={() => setShowPhotoDetail(false)}/>}
   </section>
 
   return <section className="source-image-panel source-image-panel--selected-inspector" aria-label="Selected clue inspector">

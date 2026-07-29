@@ -26,6 +26,7 @@ const baseCell = (): SudokuCellPresentation => ({
     invalid: false,
     lowConfidence: false,
     scanCorrected: false,
+    scanAdded: false,
     scanReview: null
   }
 })

@@ -7,7 +7,7 @@ self.onmessage = async (event: MessageEvent<ScannerMessage>) => {
   const message = event.data
   if (message.type === 'cancel') { cancelled.add(message.id); return }
   try {
-    const result = await scanGrayImage({ width: message.image.width, height: message.image.height, pixels: new Uint8ClampedArray(message.image.pixels) })
+    const result = await scanGrayImage({ width: message.image.width, height: message.image.height, pixels: new Uint8ClampedArray(message.image.pixels) }, (progress) => self.postMessage({ id: message.id, type: 'progress', progress } satisfies ScannerResponse))
     if (cancelled.delete(message.id)) return
     const response: ScannerResponse = { id: message.id, type: 'result', result }
     self.postMessage(response)

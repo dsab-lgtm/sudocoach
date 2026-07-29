@@ -38,6 +38,7 @@ export type SudokuCellPresentation = {
     invalid: boolean
     lowConfidence: boolean
     scanCorrected: boolean
+    scanAdded: boolean
     scanReview: 'pending' | 'reviewed' | 'scanned' | 'needs-review' | 'confirmed' | null
   }
 }

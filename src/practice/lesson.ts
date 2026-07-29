@@ -177,6 +177,7 @@ export const practicePresentation = ({ board, selected, lesson, clueStage }: {
           invalid: false,
           lowConfidence: false,
           scanCorrected: false,
+          scanAdded: false,
           scanReview: null
         }
       }

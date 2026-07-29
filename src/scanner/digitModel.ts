@@ -4,6 +4,7 @@ import { preprocessDigit } from './digitPreprocess'
 import { isBlankAwareDigitModel, isDigitModelMetadata, modelMatchesMetadata, type DigitModelMetadata } from './modelMetadata'
 
 type LoadedDigitModel = { model: tf.LayersModel; metadata: DigitModelMetadata }
+export type DigitRecognition = { value: Digit | null; confidence: number; modelReady: boolean; modelStatus?: DigitModelMetadata['modelStatus']; reviewThreshold?: number }
 let modelPromise: Promise<LoadedDigitModel | null> | null = null
 
 const legacyPreprocess = (pixels: number[][]) => {
@@ -79,30 +80,47 @@ export const recognitionForProbabilities = (metadata: DigitModelMetadata, rawPro
   }
 }
 
-const predictionFor = async (loaded: LoadedDigitModel, inputValues: Float32Array) => {
-  const input = tf.tensor4d(inputValues, [1, 28, 28, 1])
-  const prediction = loaded.model.predict(input) as tf.Tensor
+const predictionsFor = async (loaded: LoadedDigitModel, inputs: readonly Float32Array[]) => {
+  if (!inputs.length) return []
+  const values = new Float32Array(inputs.length * 28 * 28)
+  inputs.forEach((input, index) => values.set(input, index * 28 * 28))
+  const tensor = tf.tensor4d(values, [inputs.length, 28, 28, 1])
+  const prediction = loaded.model.predict(tensor) as tf.Tensor
   const probabilities = await prediction.data()
-  input.dispose(); prediction.dispose()
-  return recognitionForProbabilities(loaded.metadata, probabilities)
+  tensor.dispose(); prediction.dispose()
+  return inputs.map((_, index) => recognitionForProbabilities(loaded.metadata, probabilities.slice(index * loaded.metadata.labels.length, (index + 1) * loaded.metadata.labels.length)))
+}
+
+/** Runs one TensorFlow prediction for a segmented Sudoku grid instead of 81 single-cell tensors. */
+export const recognizeDigits = async (pixelsByCell: readonly number[][][]): Promise<DigitRecognition[]> => {
+  const preprocessed = pixelsByCell.map((pixels) => preprocessDigit(pixels))
+  const loaded = await loadModel()
+  if (!loaded) return pixelsByCell.map((pixels, index) => preprocessed[index].hasInk
+    ? { ...templateFallback(pixels), modelReady: false }
+    : { value: null, confidence: 1, modelReady: true })
+
+  const reviewThreshold = loaded.metadata.confidenceThresholds.review
+  if (loaded.metadata.preprocessingVersion === 'v1') {
+    const inputs = pixelsByCell.map(legacyPreprocess)
+    const active = inputs.map((input, index) => ({ input, index })).filter(({ input }) => Math.max(...input) > 0)
+    const predictions = await predictionsFor(loaded, active.map(({ input }) => input))
+    const byIndex = new Map(active.map(({ index }, predictionIndex) => [index, predictions[predictionIndex]]))
+    return inputs.map((_, index) => {
+      const recognition = byIndex.get(index)
+      return recognition ? { ...recognition, modelReady: true, modelStatus: loaded.metadata.modelStatus, reviewThreshold } : { value: null, confidence: 1, modelReady: true, modelStatus: loaded.metadata.modelStatus, reviewThreshold }
+    })
+  }
+
+  if (isBlankAwareDigitModel(loaded.metadata)) {
+    const predictions = await predictionsFor(loaded, preprocessed.map(({ input }) => input))
+    return predictions.map((recognition) => ({ ...recognition, modelReady: true, modelStatus: loaded.metadata.modelStatus, reviewThreshold }))
+  }
+
+  const predictions = await predictionsFor(loaded, preprocessed.map(({ input }) => input))
+  return predictions.map((recognition, index) => preprocessed[index].hasInk
+    ? { ...recognition, modelReady: true, modelStatus: loaded.metadata.modelStatus, reviewThreshold }
+    : { value: null, confidence: 1, modelReady: true, modelStatus: loaded.metadata.modelStatus, reviewThreshold })
 }
 
 /** Classifies a cropped, grid-line-free Sudoku cell. Schema v2 models include a blank class. */
-export const recognizeDigit = async (pixels: number[][]): Promise<{ value: Digit | null; confidence: number; modelReady: boolean; modelStatus?: DigitModelMetadata['modelStatus']; reviewThreshold?: number }> => {
-  const preprocessed = preprocessDigit(pixels)
-  const loaded = await loadModel()
-  if (loaded?.metadata.preprocessingVersion === 'v1') {
-    const legacy = legacyPreprocess(pixels)
-    if (!Math.max(...legacy)) return { value: null, confidence: 1, modelReady: true, modelStatus: loaded.metadata.modelStatus, reviewThreshold: loaded.metadata.confidenceThresholds.review }
-    const recognition = await predictionFor(loaded, legacy)
-    return { ...recognition, modelReady: true, modelStatus: loaded.metadata.modelStatus, reviewThreshold: loaded.metadata.confidenceThresholds.review }
-  }
-  if (loaded && isBlankAwareDigitModel(loaded.metadata)) {
-    const recognition = await predictionFor(loaded, preprocessed.input)
-    return { ...recognition, modelReady: true, modelStatus: loaded.metadata.modelStatus, reviewThreshold: loaded.metadata.confidenceThresholds.review }
-  }
-  if (!preprocessed.hasInk) return { value: null, confidence: 1, modelReady: true, ...(loaded ? { modelStatus: loaded.metadata.modelStatus, reviewThreshold: loaded.metadata.confidenceThresholds.review } : {}) }
-  if (!loaded) return { ...templateFallback(pixels), modelReady: false }
-  const recognition = await predictionFor(loaded, preprocessed.input)
-  return { ...recognition, modelReady: true, modelStatus: loaded.metadata.modelStatus, reviewThreshold: loaded.metadata.confidenceThresholds.review }
-}
+export const recognizeDigit = async (pixels: number[][]): Promise<DigitRecognition> => (await recognizeDigits([pixels]))[0]

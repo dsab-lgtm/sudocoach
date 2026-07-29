@@ -73,6 +73,34 @@ test('manual entry supports keyboard entry and task-header navigation', async ({
   await expect(page.getByRole('button', { name: 'Back to home' })).toHaveAttribute('aria-label', 'Back to home')
 })
 
+for (const viewport of viewports.slice(0, 2)) {
+  test(`scan photo viewer stays bounded and keyboard-operable at ${viewport.width}px`, async ({ page }) => {
+    await prepare(page)
+    await page.setViewportSize(viewport)
+    await page.goto('/#/__e2e__/review')
+    const trigger = page.getByRole('button', { name: 'View full image' })
+    await trigger.focus()
+    await trigger.click()
+
+    const dialog = page.getByRole('dialog', { name: 'Compare with original photo' })
+    await expect(dialog).toBeVisible()
+    const bounds = await dialog.boundingBox()
+    expect(bounds).not.toBeNull()
+    expect(bounds!.x).toBeGreaterThanOrEqual(0)
+    expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(viewport.width)
+    expect(bounds!.y).toBeGreaterThanOrEqual(0)
+    expect(bounds!.y + bounds!.height).toBeLessThanOrEqual(viewport.height)
+
+    await page.getByRole('button', { name: 'Zoom in' }).click()
+    await expect(page.getByText('125% zoom. Use the controls, wheel, or pinch to inspect the photo.')).toBeVisible()
+    await page.locator('.ui-modal__surface').evaluate((element) => { element.scrollTop = element.scrollHeight })
+    await expect(page.getByRole('button', { name: 'Close photo' })).toBeVisible()
+    await page.getByRole('button', { name: 'Close photo' }).click()
+    await expect(dialog).toBeHidden()
+    await expect(trigger).toBeFocused()
+  })
+}
+
 test('destructive confirmation is an alert dialog and restores focus', async ({ page }) => {
   await prepare(page)
   await page.goto('/#/settings')

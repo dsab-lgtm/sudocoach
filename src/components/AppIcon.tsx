@@ -7,7 +7,10 @@ import {
   MoreHorizontal,
   Pencil,
   Settings,
+  RotateCcw,
   X,
+  ZoomIn,
+  ZoomOut,
   type LucideIcon
 } from 'lucide-react'
 
@@ -26,6 +29,9 @@ export function ForwardIcon() { return <AppIcon icon={ArrowRight}/> }
 export function CameraIcon() { return <AppIcon icon={Camera}/> }
 export function SettingsIcon() { return <AppIcon icon={Settings}/> }
 export function CloseIcon() { return <AppIcon icon={X}/> }
+export function ZoomInIcon() { return <AppIcon icon={ZoomIn}/> }
+export function ZoomOutIcon() { return <AppIcon icon={ZoomOut}/> }
+export function ResetZoomIcon() { return <AppIcon icon={RotateCcw}/> }
 export function MoreIcon() { return <AppIcon icon={MoreHorizontal}/> }
 export function PuzzleIcon() { return <AppIcon icon={Grid3X3}/> }
 export function ManualEntryIcon() { return <AppIcon icon={Pencil}/> }

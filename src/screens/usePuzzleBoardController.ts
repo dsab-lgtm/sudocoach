@@ -7,6 +7,7 @@ import type { BoardFeedback, BoardFeedbackKind, NumberPadAllowedActions, NumberP
 import { usePuzzleStore } from '../store/puzzleStore'
 
 type ScanReviewPresentation = {
+  added?: readonly CellPosition[]
   corrected?: readonly CellPosition[]
   pending: readonly CellPosition[]
   reviewed: readonly CellPosition[]
@@ -57,6 +58,7 @@ export function usePuzzleBoardController({ notesMode, candidateMode = 'manual', 
   const pendingReview = useMemo(() => positionSet(scanReview?.pending ?? []), [scanReview])
   const reviewedReview = useMemo(() => positionSet(scanReview?.reviewed ?? []), [scanReview])
   const correctedReview = useMemo(() => positionSet(scanReview?.corrected ?? []), [scanReview])
+  const addedReview = useMemo(() => positionSet(scanReview?.added ?? []), [scanReview])
   const scannedReview = useMemo(() => positionSet(scanReview?.scanned ?? []), [scanReview])
   const needsReview = useMemo(() => positionSet(scanReview?.needsReview ?? []), [scanReview])
   const confirmedReview = useMemo(() => positionSet(scanReview?.confirmed ?? []), [scanReview])
@@ -94,12 +96,13 @@ export function usePuzzleBoardController({ notesMode, candidateMode = 'manual', 
           invalid: conflicts.has(key),
           lowConfidence: lowConfidence.has(key),
           scanCorrected: correctedReview.has(key),
+          scanAdded: addedReview.has(key),
           scanReview: needsReview.has(key) ? 'needs-review' : pendingReview.has(key) ? 'pending' : confirmedReview.has(key) ? 'confirmed' : reviewedReview.has(key) ? 'reviewed' : scannedReview.has(key) ? 'scanned' : null
         }
       }
     })),
     feedback
-  }), [board, candidateMode, candidateState, candidates, conflicts, confirmedReview, correctedReview, feedback, focused, hintStep, lowConfidence, matching, needsReview, pendingReview, related, reviewedReview, scannedReview])
+  }), [addedReview, board, candidateMode, candidateState, candidates, conflicts, confirmedReview, correctedReview, feedback, focused, hintStep, lowConfidence, matching, needsReview, pendingReview, related, reviewedReview, scannedReview])
 
   const onEnterDigit = (position: CellPosition, digit: Digit) => {
     const cell = board[position.row][position.col]

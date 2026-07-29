@@ -65,16 +65,16 @@ describe('ScanReviewScreen', () => {
     scannerSession.setResult(portraitScanReviewFixture)
     await renderReview()
     expect(screen.getByText('0 of 24 reviewed')).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'Accept high-confidence' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Accept 23 high-confidence' }))
     expect(screen.getByText('23 of 24 reviewed')).toBeInTheDocument()
     expect(screen.getByText('1 clue remains before you can continue.')).toBeInTheDocument()
   })
 
-  it('prioritizes lower-confidence clues and only bulk-accepts production high-confidence clues', async () => {
+  it('prioritizes lower-confidence clues and leaves them for individual confirmation after batch acceptance', async () => {
     scannerSession.setResult(productionResult)
     await renderReview()
     expect(screen.getByText('0 of 2 reviewed')).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'Accept high-confidence' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Accept 1 high-confidence' }))
     expect(screen.getByText('1 of 2 reviewed')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Next needs review' }))
     expect(screen.getByRole('gridcell', { name: /Row 1, column 2: 3.*scan review pending/ })).toHaveAttribute('aria-selected', 'true')
@@ -83,10 +83,10 @@ describe('ScanReviewScreen', () => {
     expect(screen.getByRole('gridcell', { name: /Row 1, column 2: 3.*scan confirmed/ })).toHaveClass('is-scan-confirmed')
   })
 
-  it('requires individual confirmation for experimental high-confidence clues', async () => {
+  it('offers explicit batch acceptance for experimental high-confidence clues without bypassing risk items', async () => {
     scannerSession.setResult({ ...productionResult, modelStatus: 'experimental' })
     await renderReview()
-    expect(screen.queryByRole('button', { name: 'Accept high-confidence' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Accept 1 high-confidence' })).toBeInTheDocument()
     expect(screen.getByText('0 of 2 reviewed')).toBeInTheDocument()
   })
 
@@ -100,6 +100,16 @@ describe('ScanReviewScreen', () => {
     expect(screen.getByRole('gridcell', { name: /Row 1, column 1: 8.*corrected.*scan review pending/ })).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Undo' }))
     expect(screen.getByRole('gridcell', { name: /Row 1, column 1: 5.*scan confirmed/ })).toBeInTheDocument()
+  })
+
+  it('keeps a deleted scanner suggestion unresolved and advances after individual confirmation', async () => {
+    scannerSession.setResult(productionResult)
+    await renderReview()
+    fireEvent.click(screen.getByRole('button', { name: 'Clear' }))
+
+    expect(screen.getByRole('gridcell', { name: /Row 1, column 1, empty, editable, scanned clue, corrected, scan review pending/ })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm correction' }))
+    expect(screen.getByRole('gridcell', { name: /Row 1, column 2: 3.*scan review pending/ })).toHaveAttribute('aria-selected', 'true')
   })
 
   it('keeps missed cells editable and describes an empty scan without opening a modal', async () => {
@@ -125,8 +135,8 @@ describe('ScanReviewScreen', () => {
     act(() => usePuzzleStore.getState().setReviewGrid(emptyGrid()))
     scannerSession.setResult(unsolvableResult)
     await renderReview()
-    fireEvent.click(screen.getByRole('button', { name: 'Accept high-confidence' }))
-    await screen.findByText('These clues cannot form a Sudoku. Check the highlighted values.')
+    fireEvent.click(screen.getByRole('button', { name: 'Accept 9 high-confidence' }))
+    await screen.findByText('These clues cannot form a Sudoku. Recheck the source photo before continuing.')
   })
 
   it('keeps the source image in the review workspace and clears it when rescanning', async () => {
@@ -147,12 +157,35 @@ describe('ScanReviewScreen', () => {
     scannerSession.setResult(uniqueResult)
     const clearSession = vi.spyOn(scannerSession, 'clear').mockImplementation(() => undefined)
     render(<TestRouter initialEntries={['/review']}><Routes><Route path="/review" element={<ScanReviewScreen/>}/><Route path="/solve" element={<p>Solver destination</p>}/></Routes></TestRouter>)
-    await screen.findByRole('button', { name: 'Accept high-confidence' })
-    fireEvent.click(screen.getByRole('button', { name: 'Accept high-confidence' }))
+    await screen.findByRole('button', { name: 'Accept 80 high-confidence' })
+    fireEvent.click(screen.getByRole('button', { name: 'Accept 80 high-confidence' }))
     await screen.findByText('Ready to solve: the reviewed clues have one solution.')
     fireEvent.click(screen.getByRole('button', { name: 'Continue to solver' }))
     await screen.findByText('Solver destination')
     expect(clearSession).toHaveBeenCalledOnce()
     expect(usePuzzleStore.getState().solution).toEqual(photographedPuzzleSolution)
+  })
+
+  it('requires a manually added clue to be confirmed and marks it on the board', async () => {
+    scannerSession.setResult(productionResult)
+    await renderReview()
+    fireEvent.click(screen.getByRole('gridcell', { name: 'Row 1, column 3, empty, editable' }))
+    fireEvent.click(screen.getByRole('button', { name: '4' }))
+
+    expect(screen.getByRole('button', { name: 'Confirm added clue' })).toBeEnabled()
+    expect(screen.getByRole('status', { name: 'Scan review status' })).toHaveTextContent('1 added')
+    expect(screen.getByRole('gridcell', { name: /Row 1, column 3: 4.*manually added clue.*scan review pending/ })).toHaveClass('is-scan-added')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm added clue' }))
+    expect(screen.getByRole('status', { name: 'Scan review status' })).toHaveTextContent('1 confirmed')
+    expect(screen.getByRole('gridcell', { name: /Row 1, column 3: 4.*manually added clue.*scan confirmed/ })).toHaveClass('is-scan-confirmed')
+  })
+
+  it('does not batch-accept low-ink scanner suggestions', async () => {
+    scannerSession.setResult({ ...productionResult, cells: [{ ...productionResult.cells[0], inkRatio: .01 }] })
+    await renderReview()
+
+    expect(screen.queryByRole('button', { name: /Accept .*high-confidence/ })).not.toBeInTheDocument()
+    expect(screen.getByRole('gridcell', { name: /Row 1, column 1: 5.*scan review pending/ })).toHaveClass('is-low-confidence')
   })
 })

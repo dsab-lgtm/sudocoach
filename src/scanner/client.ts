@@ -1,5 +1,5 @@
 import { grayImageFromRgba, type GrayImage } from './grayImage'
-import type { ScanResult, ScannerResponse } from './types'
+import type { ScanProgressListener, ScanResult, ScannerResponse } from './types'
 import { createId } from '../utils/createId'
 
 const MAX_EDGE = 1400
@@ -46,7 +46,7 @@ const decodeToGray = async (file: File): Promise<GrayImage> => {
   return grayImageFromRgba(context.getImageData(0, 0, canvas.width, canvas.height).data, canvas.width, canvas.height)
 }
 
-const scanInWorker = (image: GrayImage, signal?: AbortSignal): Promise<ScanResult> => {
+const scanInWorker = (image: GrayImage, signal?: AbortSignal, onProgress?: ScanProgressListener): Promise<ScanResult> => {
   const worker = new Worker(new URL('./scanner.worker.ts', import.meta.url), { type: 'module' })
   const id = createId()
   const workerPixels = image.pixels.slice()
@@ -55,6 +55,7 @@ const scanInWorker = (image: GrayImage, signal?: AbortSignal): Promise<ScanResul
     signal?.addEventListener('abort', cancel, { once: true })
     worker.onerror = () => { worker.terminate(); signal?.removeEventListener('abort', cancel); reject(new Error('Scanner worker is unavailable.')) }
     worker.onmessage = ({ data }: MessageEvent<ScannerResponse>) => {
+      if (data.type === 'progress') { onProgress?.(data.progress); return }
       worker.terminate()
       signal?.removeEventListener('abort', cancel)
       if (data.type === 'error') reject(new Error(data.error)); else resolve(data.result)
@@ -64,14 +65,15 @@ const scanInWorker = (image: GrayImage, signal?: AbortSignal): Promise<ScanResul
 }
 
 /** Decodes on the page for Safari compatibility, then prefers a worker when available. */
-export const scanFile = async (file: File, signal?: AbortSignal): Promise<ScanResult> => {
+export const scanFile = async (file: File, signal?: AbortSignal, onProgress?: ScanProgressListener): Promise<ScanResult> => {
   if (!file.type.startsWith('image/') && !/\.(jpe?g|png|heic|heif)$/i.test(file.name)) throw new Error('Choose an image file to scan.')
+  onProgress?.({ stage: 'decoding' })
   const image = await decodeToGray(file)
   if (signal?.aborted) throw new DOMException('Scan cancelled', 'AbortError')
   if (typeof Worker !== 'undefined') {
-    try { return await scanInWorker(image, signal) } catch (error) { if ((error as Error).name === 'AbortError') throw error }
+    try { return await scanInWorker(image, signal, onProgress) } catch (error) { if ((error as Error).name === 'AbortError') throw error }
   }
   if (signal?.aborted) throw new DOMException('Scan cancelled', 'AbortError')
   const { scanGrayImageOnMainThread } = await import('./mainFallback')
-  return scanGrayImageOnMainThread(image)
+  return scanGrayImageOnMainThread(image, onProgress)
 }

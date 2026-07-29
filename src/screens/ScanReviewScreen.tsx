@@ -18,11 +18,18 @@ import { usePuzzleBoardController } from './usePuzzleBoardController'
 
 const cellKey = (row: number, col: number) => `${row}:${col}`
 const positionOf = ({ row, col }: CellPosition) => ({ row, col })
-const clueCells = (cells: readonly ScanCell[]) => cells.filter((cell) => cell.value !== null && cell.inkRatio >= 0.018)
+const clueCells = (cells: readonly ScanCell[]) => cells.filter((cell) => cell.value !== null)
+const reviewGrid = (cells: readonly ScanCell[]) => {
+  const grid = Array.from({ length: 9 }, () => Array<Digit | null>(9).fill(null))
+  clueCells(cells).forEach((cell) => { grid[cell.row][cell.col] = cell.value })
+  return grid
+}
+type ReviewDecision = { value: Digit | null; mode: 'individual' | 'batch' }
+type ReviewItem = { position: CellPosition; kind: 'scanner' | 'added'; cell?: ScanCell }
 
 export function ScanReviewScreen() {
   const navigate = useNavigate()
-  const [confirmedValues, setConfirmedValues] = useState<Map<string, Digit | null>>(new Map())
+  const [decisions, setDecisions] = useState<Map<string, ReviewDecision>>(new Map())
   const [validationStatus, setValidationStatus] = useState<SolutionStatus | 'checking'>('unknown')
   const result = scannerSession.getResult()
   const setReviewGrid = usePuzzleStore((state) => state.setReviewGrid)
@@ -34,6 +41,7 @@ export function ScanReviewScreen() {
   const redo = usePuzzleStore((state) => state.redoMove)
   const canUndo = usePuzzleStore((state) => state.undo.length > 0)
   const canRedo = usePuzzleStore((state) => state.redo.length > 0)
+  const detectedClues = useMemo(() => clueCells(result?.cells ?? []), [result])
 
   useEffect(() => {
     if (!result) {
@@ -41,9 +49,9 @@ export function ScanReviewScreen() {
       return
     }
     const first = clueCells(result.cells)[0]
-    setReviewGrid(result.grid)
+    setReviewGrid(reviewGrid(result.cells))
     select(first ? positionOf(first) : { row: 0, col: 0 })
-    setConfirmedValues(new Map())
+    setDecisions(new Map())
     setValidationStatus('unknown')
   }, [navigate, result, select, setReviewGrid])
 
@@ -59,24 +67,46 @@ export function ScanReviewScreen() {
     return () => window.clearTimeout(timer)
   }, [hasClues, immediateValidation.valid, values])
 
-  const detectedClues = clueCells(result?.cells ?? [])
-  const isConfirmed = (cell: ScanCell) => confirmedValues.get(cellKey(cell.row, cell.col)) === board[cell.row][cell.col].value && confirmedValues.has(cellKey(cell.row, cell.col))
-  const pendingClues = detectedClues.filter((cell) => !isConfirmed(cell))
-  const priorityClues = [...pendingClues].sort((left, right) => left.confidence - right.confidence || left.row - right.row || left.col - right.col)
-  const confirmedClues = detectedClues.filter(isConfirmed)
+  const isConfirmed = (position: CellPosition, value: Digit | null) => decisions.get(cellKey(position.row, position.col))?.value === value
+  const pendingClues = detectedClues.filter((cell) => !isConfirmed(cell, board[cell.row][cell.col].value))
+  const confirmedClues = detectedClues.filter((cell) => isConfirmed(cell, board[cell.row][cell.col].value))
   const corrected = detectedClues.filter((cell) => board[cell.row][cell.col].value !== cell.value).map(positionOf)
-  const policyThreshold = result?.modelStatus === 'production' ? result.confidencePolicy?.reviewThreshold : undefined
-  const highConfidenceClues = policyThreshold === undefined ? [] : pendingClues.filter((cell) => cell.confidence >= policyThreshold && board[cell.row][cell.col].value === cell.value)
-  const selectedPending = Boolean(selected && pendingClues.some((cell) => cell.row === selected.row && cell.col === selected.col))
+  const detectedKeys = new Set(detectedClues.map((cell) => cellKey(cell.row, cell.col)))
+  const addedClues = board.flatMap((row, rowIndex) => row.flatMap((cell, col) =>
+    cell.value && cell.origin === 'manual' && !detectedKeys.has(cellKey(rowIndex, col)) ? [{ row: rowIndex, col, value: cell.value }] : []
+  ))
+  const pendingAdded = addedClues.filter((cell) => !isConfirmed(cell, cell.value))
+  const confirmedAdded = addedClues.filter((cell) => isConfirmed(cell, cell.value))
+  const policyThreshold = result?.confidencePolicy?.reviewThreshold
+  const isBatchEligible = (cell: ScanCell) => policyThreshold !== undefined
+    && cell.confidence >= policyThreshold
+    && cell.inkRatio >= 0.018
+    && board[cell.row][cell.col].value === cell.value
+  const highConfidenceClues = pendingClues.filter(isBatchEligible)
+  const riskClues = pendingClues.filter((cell) => !isBatchEligible(cell))
+  const pendingItems: ReviewItem[] = [
+    ...pendingAdded.map((item) => ({ position: positionOf(item), kind: 'added' as const })),
+    ...pendingClues.map((cell) => ({ position: positionOf(cell), kind: 'scanner' as const, cell }))
+  ]
+  const priorityItems: ReviewItem[] = [
+    ...pendingAdded.map((item) => ({ position: positionOf(item), kind: 'added' as const })),
+    ...riskClues.sort((left, right) => left.confidence - right.confidence || left.inkRatio - right.inkRatio || left.row - right.row || left.col - right.col).map((cell) => ({ position: positionOf(cell), kind: 'scanner' as const, cell }))
+  ]
+  const selectedPending = Boolean(selected && pendingItems.some((item) => item.position.row === selected.row && item.position.col === selected.col))
+  const selectedAdded = Boolean(selected && pendingAdded.some((cell) => cell.row === selected.row && cell.col === selected.col))
   const selectedCorrected = Boolean(selected && corrected.some((cell) => cell.row === selected.row && cell.col === selected.col))
+  const reviewedCount = confirmedClues.length + confirmedAdded.length
+  const lowConfidence = detectedClues.filter((cell) => !isBatchEligible(cell)).map(positionOf)
   const puzzle = usePuzzleBoardController({
     notesMode: false,
+    lowConfidenceCells: lowConfidence,
     scanReview: {
+      added: addedClues.map(positionOf),
       pending: [],
       reviewed: [],
       scanned: detectedClues.map(positionOf),
-      needsReview: pendingClues.map(positionOf),
-      confirmed: confirmedClues.map(positionOf),
+      needsReview: [...pendingClues, ...pendingAdded].map(positionOf),
+      confirmed: [...confirmedClues, ...confirmedAdded].map(positionOf),
       corrected
     }
   })
@@ -85,23 +115,29 @@ export function ScanReviewScreen() {
 
   const confirmSelected = () => {
     if (!selected || !selectedPending) return
-    setConfirmedValues((current) => new Map(current).set(cellKey(selected.row, selected.col), board[selected.row][selected.col].value))
+    const currentPosition = { ...selected }
+    setDecisions((current) => new Map(current).set(cellKey(currentPosition.row, currentPosition.col), { value: board[currentPosition.row][currentPosition.col].value, mode: 'individual' }))
+    const next = [...priorityItems, ...pendingItems].find((item) => item.position.row !== currentPosition.row || item.position.col !== currentPosition.col)
+    if (next) select(next.position)
   }
   const selectNext = () => {
-    if (!priorityClues.length) return
-    const currentIndex = selected ? priorityClues.findIndex((cell) => cell.row === selected.row && cell.col === selected.col) : -1
-    select(positionOf(priorityClues[(currentIndex + 1) % priorityClues.length]))
+    const queue = priorityItems.length ? priorityItems : pendingItems
+    if (!queue.length) return
+    const currentIndex = selected ? queue.findIndex((item) => item.position.row === selected.row && item.position.col === selected.col) : -1
+    select(queue[(currentIndex + 1) % queue.length].position)
   }
   const acceptHighConfidence = () => {
     if (!highConfidenceClues.length) return
-    setConfirmedValues((current) => {
+    setDecisions((current) => {
       const next = new Map(current)
-      highConfidenceClues.forEach((cell) => next.set(cellKey(cell.row, cell.col), board[cell.row][cell.col].value))
+      highConfidenceClues.forEach((cell) => next.set(cellKey(cell.row, cell.col), { value: board[cell.row][cell.col].value, mode: 'batch' }))
       return next
     })
+    const next = priorityItems.find((item) => item.kind === 'added' || !highConfidenceClues.some((cell) => cell.row === item.position.row && cell.col === item.position.col))
+    if (next) select(next.position)
   }
   const continueToSolver = () => {
-    if (pendingClues.length || !immediateValidation.valid || validationStatus !== 'unique') return
+    if (pendingItems.length || !immediateValidation.valid || validationStatus !== 'unique') return
     const analysis = analyzeSolutions(values)
     if (analysis.status !== 'unique' || !analysis.solution) return
     setPuzzle(values, 'scan')
@@ -115,20 +151,23 @@ export function ScanReviewScreen() {
   }
 
   return <ScanReviewWorkspace
-    header={<ReviewHeader diagnostics={result.diagnostics} error={null} gridDetected={result.image.bounds.size > 0} noCluesDetected={!detectedClues.length} onBack={() => discardScan('/')} reviewedCount={confirmedClues.length} detectedCount={detectedClues.length}/>}
+    header={<ReviewHeader diagnostics={result.diagnostics} error={null} gridDetected={result.image.bounds.size > 0} noCluesDetected={!detectedClues.length} onBack={() => discardScan('/')} reviewedCount={reviewedCount} detectedCount={detectedClues.length} addedCount={addedClues.length} unresolvedCount={pendingItems.length}/>}
     source={<SourceImagePanel variant="reference" cells={result.cells} previewUrl={scannerSession.preview()} selected={selected} onSelectCell={select}/>}
     board={<SudokuBoard presentation={puzzle.presentation} interactions={puzzle.boardInteractions} showCandidates={false} autoAdvance={false} mode="scan-review" density="compact"/>}
     inspector={<SourceImagePanel variant="selected-inspector" cells={result.cells} previewUrl={scannerSession.preview()} selected={selected} onSelectCell={select}/>}
     keypad={<div className="scan-review-keypad"><NumberPad notesMode={false} disabled={puzzle.isKeypadDisabled} allowedActions={puzzle.allowedActions} {...puzzle.numberPadInteractions} showNotesToggle={false}/><ReviewInspector
-        pending={pendingClues.length}
+        pending={pendingItems.length}
         corrected={selectedCorrected}
+        added={selectedAdded}
+        highConfidenceCount={highConfidenceClues.length}
         canAcceptHighConfidence={highConfidenceClues.length > 0}
         canConfirm={selectedPending}
-        canContinue={!pendingClues.length && immediateValidation.valid && validationStatus === 'unique'}
+        canContinue={!pendingItems.length && immediateValidation.valid && validationStatus === 'unique'}
         canRedo={canRedo}
         canUndo={canUndo}
         hasClues={hasClues}
         hasConflicts={!immediateValidation.valid}
+        hasRiskItems={lowConfidence.length > 0 || addedClues.length > 0 || corrected.length > 0}
         validationStatus={validationStatus}
         onAcceptHighConfidence={acceptHighConfidence}
         onConfirm={confirmSelected}

@@ -15,6 +15,10 @@ describe('SourceImagePanel', () => {
     fireEvent.click(screen.getByRole('button', { name: 'View full image' }))
     expect(screen.getByRole('dialog', { name: 'Compare with original photo' })).toBeInTheDocument()
     expect(document.querySelector('.photo-comparison-sheet__image polygon')).toHaveAttribute('points', '0.2,0.2 0.3,0.2 0.3,0.3 0.2,0.3')
+    fireEvent.click(screen.getByRole('button', { name: 'Zoom in' }))
+    expect(screen.getByRole('status')).toHaveTextContent('125% zoom')
+    fireEvent.click(screen.getByRole('button', { name: 'Reset zoom' }))
+    expect(screen.getByRole('status')).toHaveTextContent('100% zoom')
   })
 
   it('keeps the full source image undistorted and selects mapped regions in the desktop reference', async () => {

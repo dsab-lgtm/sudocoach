@@ -1,9 +1,9 @@
 import type { Grid } from '../engine/types'
 import { preprocessDigit } from './digitPreprocess'
-import { recognizeDigit } from './digitModel'
+import { recognizeDigits } from './digitModel'
 import { type GrayImage } from './grayImage'
 import { rectifyWithOpenCv, type SourceCorner } from './opencvGrid'
-import type { ScanCell, ScanResult, SourcePoint, SourceRegion } from './types'
+import type { ScanCell, ScanProgressListener, ScanResult, SourcePoint, SourceRegion } from './types'
 
 const mean = (values: number[]) => values.reduce((total, value) => total + value, 0) / Math.max(values.length, 1)
 
@@ -103,12 +103,12 @@ const detectSquareBounds = (image: GrayImage) => {
   return { x: Math.max(0, Math.round(left + (rawWidth - size) / 2)), y: Math.max(0, Math.round(top + (rawHeight - size) / 2)), size }
 }
 
-const classifyCells = async (image: GrayImage, sourceImage: GrayImage, bounds: Bounds, sourceCorners?: readonly SourceCorner[]): Promise<{ cells: ScanCell[]; modelReady: boolean; modelStatus?: 'production' | 'experimental'; reviewThreshold?: number }> => {
-  const cells: ScanCell[] = []
+const classifyCells = async (image: GrayImage, sourceImage: GrayImage, bounds: Bounds, sourceCorners?: readonly SourceCorner[], onProgress?: ScanProgressListener): Promise<{ cells: ScanCell[]; modelReady: boolean; modelStatus?: 'production' | 'experimental'; reviewThreshold?: number }> => {
   let modelReady = true
   let modelStatus: 'production' | 'experimental' | undefined
   let reviewThreshold: number | undefined
   const verticalLines = gridLines(image, bounds, true); const horizontalLines = gridLines(image, bounds, false)
+  const segments: Array<{ row: number; col: number; pixels: number[][]; inkRatio: number }> = []
   for (let row = 0; row < 9; row += 1) for (let col = 0; col < 9; col += 1) {
     const left = verticalLines?.[col] ?? bounds.x + col * bounds.size / 9; const right = verticalLines?.[col + 1] ?? bounds.x + (col + 1) * bounds.size / 9
     const top = horizontalLines?.[row] ?? bounds.y + row * bounds.size / 9; const bottom = horizontalLines?.[row + 1] ?? bounds.y + (row + 1) * bounds.size / 9
@@ -126,23 +126,27 @@ const classifyCells = async (image: GrayImage, sourceImage: GrayImage, bounds: B
       }
       pixels.push(line)
     }
-    const preparation = preprocessDigit(pixels)
-    // Schema-v2 digit models decide whether a cell is blank themselves. The
-    // legacy recognizer retains its local-ink gate, so this is safe for both
-    // deployed model contracts and lets a blank-aware model reject ink noise.
-    const recognition = await recognizeDigit(pixels)
+    segments.push({ row, col, pixels, inkRatio: preprocessDigit(pixels).inkRatio })
+  }
+  onProgress?.({ stage: 'recognizing', completed: 0, total: segments.length })
+  const recognitions = await recognizeDigits(segments.map((segment) => segment.pixels))
+  const cells: ScanCell[] = []
+  recognitions.forEach((recognition, index) => {
+    const segment = segments[index]
     if (!recognition.modelReady) modelReady = false
     if (recognition.modelStatus) modelStatus = recognition.modelStatus
     if (recognition.reviewThreshold !== undefined) reviewThreshold = recognition.reviewThreshold
     // OpenCV corners are measured in the decoded source image, not the
     // rectified 900px working image. Keep regions in that preview coordinate
     // system so portrait and landscape source evidence stays aligned.
-    cells.push({ row, col, value: recognition.value, confidence: recognition.confidence, inkRatio: preparation.inkRatio, sourceRegion: sourceRegionFor(row, col, sourceImage, bounds, sourceCorners) })
-  }
+    cells.push({ row: segment.row, col: segment.col, value: recognition.value, confidence: recognition.confidence, inkRatio: segment.inkRatio, sourceRegion: sourceRegionFor(segment.row, segment.col, sourceImage, bounds, sourceCorners) })
+  })
+  onProgress?.({ stage: 'recognizing', completed: segments.length, total: segments.length })
   return { cells, modelReady, modelStatus, reviewThreshold }
 }
 
-export const scanGrayImage = async (normalized: GrayImage): Promise<ScanResult> => {
+export const scanGrayImage = async (normalized: GrayImage, onProgress?: ScanProgressListener): Promise<ScanResult> => {
+  onProgress?.({ stage: 'grid-detection' })
   const rectified = await rectifyWithOpenCv(normalized)
   const working = rectified ?? normalized
   const bounds = rectified ? { x: 0, y: 0, size: rectified.width } : detectSquareBounds(working)
@@ -150,9 +154,10 @@ export const scanGrayImage = async (normalized: GrayImage): Promise<ScanResult> 
     grid: Array.from({ length: 9 }, () => Array(9).fill(null)), cells: [], image: { width: working.width, height: working.height, bounds: { x: 0, y: 0, size: 0 } },
     diagnostics: [{ code: 'grid-not-found', message: 'We could not find a clear square Sudoku grid. Try a brighter, closer photo.', recoverable: true }]
   }
-  const { cells, modelReady, modelStatus, reviewThreshold } = await classifyCells(working, normalized, bounds, rectified?.sourceCorners)
+  const { cells, modelReady, modelStatus, reviewThreshold } = await classifyCells(working, normalized, bounds, rectified?.sourceCorners, onProgress)
   const grid: Grid = Array.from({ length: 9 }, () => Array(9).fill(null))
   cells.forEach((cell) => { grid[cell.row][cell.col] = cell.value })
+  onProgress?.({ stage: 'preparing-review' })
   return {
     grid, cells, image: { width: working.width, height: working.height, bounds },
     modelStatus,
