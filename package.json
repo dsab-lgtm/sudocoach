@@ -12,6 +12,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "test:e2e:visual": "playwright test e2e/ui-regression.spec.ts --grep \"is stable at\"",
+    "test:e2e:visual:update": "playwright test e2e/ui-regression.spec.ts --grep \"is stable at\" --update-snapshots",
     "verify:public-surface": "node scripts/verifyPublicSurface.mjs"
   },
   "dependencies": {

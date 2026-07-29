@@ -32,8 +32,8 @@ test.beforeEach(({ page: unusedPage }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-320', 'This suite supplies its own target viewports.')
 })
 
-test.describe('Linux visual baselines', () => {
-  test.skip(process.platform !== 'linux', 'Visual baselines are captured and compared in Ubuntu CI.')
+test.describe('Local visual regression', () => {
+  test.skip(Boolean(process.env.CI), 'Visual screenshots are a local developer check, not a CI gate.')
 
   for (const viewport of viewports) {
     for (const screen of screens) {

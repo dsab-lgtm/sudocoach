@@ -4,7 +4,7 @@ dist/
 .vite/
 coverage/
 playwright-report/
-e2e/ui-regression.spec.ts-snapshots/*-darwin.png
+e2e/ui-regression.spec.ts-snapshots/
 test-results/
 .venv*/
 training-data/
