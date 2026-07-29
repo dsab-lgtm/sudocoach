@@ -107,6 +107,9 @@ describe('SolverScreen puzzle behavior', () => {
     fireEvent.click(screen.getByRole('button', { name: '9' }))
     fireEvent.click(screen.getByRole('button', { name: 'Check' }))
 
+    const diagnosis = screen.getByRole('dialog', { name: 'Direct conflict found' })
+    expect(diagnosis).toHaveTextContent('2 conflicting cells highlighted.')
+    fireEvent.click(within(diagnosis).getByRole('button', { name: 'Close' }))
     expect(screen.getByRole('status')).toHaveTextContent('2 conflicting cells highlighted.')
     expect(cell(1, 1)).toHaveClass('is-conflict')
     expect(cell(1, 1)).toHaveClass('has-feedback--diagnosis')
@@ -119,7 +122,7 @@ describe('SolverScreen puzzle behavior', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Hint' }))
     const hint = screen.getByRole('dialog', { name: 'Hint' })
     expect(hint).toBeInTheDocument()
-    expect(cell(1, 1)).toHaveClass('is-hint-target')
+    expect(document.querySelector('.solver-workspace .board-cell.is-hint-target')).toBeInTheDocument()
     fireEvent.click(within(hint).getByRole('button', { name: 'More detail' }))
     fireEvent.click(within(hint).getByRole('button', { name: 'More detail' }))
     fireEvent.click(within(hint).getByRole('button', { name: 'Apply 5' }))

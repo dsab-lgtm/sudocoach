@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { PracticeCoachPanel } from '../components/PracticeCoachPanel'
 import type { SudokuBoardPresentation } from '../components/puzzleViewTypes'
 import { SudokuBoard } from '../components/SudokuBoard'
+import { TaskHeader } from '../components/TaskHeader'
 import { createBoard } from '../engine/board'
 import { getNextLogicalStep } from '../engine/logicalSolver'
 import type { Board, CellPosition } from '../engine/types'
@@ -27,6 +28,7 @@ function PracticeFocusTray({ presentation, clueStage }: { presentation: SudokuBo
 }
 
 function PracticeLesson({ exercise }: { exercise: PracticeExercise }) {
+  const navigate = useNavigate()
   const [board, setBoard] = useState<Board>(() => createBoard(exercise.grid))
   const [selected, setSelected] = useState<CellPosition>(initialSelection)
   const [clueStage, setClueStage] = useState<PracticeClueStage>(0)
@@ -92,10 +94,7 @@ function PracticeLesson({ exercise }: { exercise: PracticeExercise }) {
   }
 
   return <section className="practice-lesson" aria-labelledby="practice-session-title">
-    <header className="practice-lesson__header">
-      <div><p className="eyebrow">Practice · {exercise.methodName}</p><h1 id="practice-session-title">{exercise.title}</h1><p>{exercise.description}</p></div>
-      <Link to="/practice">Exit practice</Link>
-    </header>
+    <header className="practice-lesson__header"><TaskHeader eyebrow={`Practice · ${exercise.methodName}`} title={exercise.title} titleId="practice-session-title" description={exercise.description} backAction={{ label: 'Back to practice', onClick: () => navigate('/practice') }}/></header>
     <div className="practice-lesson__body">
       <section className="practice-lesson__board" aria-label="Practice board">
         <SudokuBoard

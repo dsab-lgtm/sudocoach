@@ -128,12 +128,12 @@ export function TrainingAnnotationScreen() {
     {message && <p className="diagnostic" role="status">{message}</p>}
     {!validation.valid && <p className="form-error" role="alert">Duplicate clues are highlighted.</p>}
     <div className="board annotation-board" role="grid" aria-label="Annotated Sudoku starting clues">
-      {grid.flatMap((row, rowIndex) => row.map((value, columnIndex) => {
+      {grid.map((row, rowIndex) => <div className="board__row" role="row" key={rowIndex}>{row.map((value, columnIndex) => {
         const position = { row: rowIndex, col: columnIndex }
         const isSelected = selected.row === rowIndex && selected.col === columnIndex
-        const className = ['board-cell', isSelected && 'is-selected', conflicts.has(keyFor(rowIndex, columnIndex)) && 'is-conflict'].filter(Boolean).join(' ')
+        const className = ['board-cell', columnIndex % 3 === 2 && columnIndex !== 8 && 'is-region-right', rowIndex % 3 === 2 && rowIndex !== 8 && 'is-region-bottom', isSelected && 'is-selected', conflicts.has(keyFor(rowIndex, columnIndex)) && 'is-conflict'].filter(Boolean).join(' ')
         return <button type="button" role="gridcell" key={keyFor(rowIndex, columnIndex)} ref={(element) => { cellRefs.current[rowIndex * 9 + columnIndex] = element }} className={className} onClick={() => setSelected(position)} onKeyDown={onCellKeyDown} tabIndex={isSelected ? 0 : -1} aria-label={`Row ${rowIndex + 1}, column ${columnIndex + 1}${value ? `, ${value}` : ', empty'}`} aria-selected={isSelected}>{value}</button>
-      }))}
+      })}</div>)}
     </div>
     <div className="number-pad" aria-label="Annotation keypad">
       {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((digit) => <button key={digit} type="button" onClick={() => setValue(digit as Digit)}>{digit}</button>)}

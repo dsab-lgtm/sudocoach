@@ -64,13 +64,13 @@ export function SudokuBoard({ presentation, interactions, readOnly = false, note
   }
 
   return <div className={`board board--${mode} board--${density}`} role="grid" aria-label="Sudoku puzzle" aria-rowcount={9} aria-colcount={9}>
-    {presentation.cells.flatMap((row, rowIndex) => row.map((cell, col) => {
+    {presentation.cells.map((row, rowIndex) => <div className="board__row" role="row" key={rowIndex}>{row.map((cell, col) => {
       const position = { row: rowIndex, col }
       const value = cell.value
       const { state } = cell
       const feedback = presentation.feedback?.cells.some((item) => item.row === rowIndex && item.col === col) ? presentation.feedback : null
       const className = [
-        'board-cell', cell.fixed ? 'is-given' : '', cell.origin === 'solution' ? 'is-solution' : '', cell.origin === 'hint' ? 'is-hint' : '', state.selected ? 'is-selected' : '', state.related ? 'is-related' : '', state.matching ? 'is-matching' : '', state.invalid ? 'is-conflict' : '', state.hintUnit ? 'is-hint-unit' : '', state.hintSupporting ? 'is-hint-supporting' : '', state.hintTarget ? 'is-hint-target' : '', state.hintRevealed ? 'is-hint-revealed' : '', cell.origin === 'scan' || state.scanReview || state.scanCorrected ? 'is-scan' : '', state.lowConfidence ? 'is-low-confidence' : '', state.scanCorrected ? 'is-scan-corrected' : '', state.scanReview === 'pending' || state.scanReview === 'needs-review' ? 'is-scan-pending' : '', state.scanReview === 'reviewed' || state.scanReview === 'confirmed' ? 'is-scan-reviewed' : '', state.scanReview ? `is-scan-${state.scanReview}` : '', feedback ? `has-feedback has-feedback--${feedback.kind}` : ''
+        'board-cell', col % 3 === 2 && col !== 8 ? 'is-region-right' : '', rowIndex % 3 === 2 && rowIndex !== 8 ? 'is-region-bottom' : '', cell.fixed ? 'is-given' : '', cell.origin === 'solution' ? 'is-solution' : '', cell.origin === 'hint' ? 'is-hint' : '', state.selected ? 'is-selected' : '', state.related ? 'is-related' : '', state.matching ? 'is-matching' : '', state.invalid ? 'is-conflict' : '', state.hintUnit ? 'is-hint-unit' : '', state.hintSupporting ? 'is-hint-supporting' : '', state.hintTarget ? 'is-hint-target' : '', state.hintRevealed ? 'is-hint-revealed' : '', cell.origin === 'scan' || state.scanReview || state.scanCorrected ? 'is-scan' : '', state.lowConfidence ? 'is-low-confidence' : '', state.scanCorrected ? 'is-scan-corrected' : '', state.scanReview === 'pending' || state.scanReview === 'needs-review' ? 'is-scan-pending' : '', state.scanReview === 'reviewed' || state.scanReview === 'confirmed' ? 'is-scan-reviewed' : '', state.scanReview ? `is-scan-${state.scanReview}` : '', feedback ? `has-feedback has-feedback--${feedback.kind}` : ''
       ].filter(Boolean).join(' ')
       const marks = cell.candidateMarks ?? []
       const notes = marks.length ? marks.map((mark) => mark.digit) : cell.notes.length ? cell.notes : (showCandidates ? cell.candidates : [])
@@ -118,6 +118,6 @@ export function SudokuBoard({ presentation, interactions, readOnly = false, note
       return <button key={`${rowIndex}-${col}`} type="button" role="gridcell" ref={(element) => { cellRefs.current[rowIndex * 9 + col] = element }} disabled={readOnly} onClick={() => interactions.onSelect(position)} onKeyDown={(event) => onKeyDown(position, event)} tabIndex={state.selected ? 0 : -1} aria-selected={state.selected} aria-readonly={Boolean(cell.fixed || readOnly || selectionOnly)} aria-invalid={state.invalid || undefined} aria-label={label} className={className}>
         {content}{removalOverlay}{feedbackCue}{showHintMarker && state.hintTarget && <span className="hint-cell-marker" aria-hidden="true">Hint</span>}{state.scanCorrected && <span className="scan-correction" aria-hidden="true">Edited</span>}{(state.scanReview === 'reviewed' || state.scanReview === 'confirmed') && <span className="scan-check" aria-hidden="true">✓</span>}
       </button>
-    }))}
+    })}</div>)}
   </div>
 }

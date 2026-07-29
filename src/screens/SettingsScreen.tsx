@@ -2,8 +2,8 @@ import { useState } from 'react'
 import { AboutPanel } from '../components/AboutPanel'
 import { Button } from '../components/Button'
 import { CandidateModeControl } from '../components/CandidateModeControl'
+import { ConfirmationDialog } from '../components/ConfirmationDialog'
 import { useCandidateAssistant } from '../components/candidateAssistantContext'
-import { Modal } from '../components/Modal'
 import { SettingsSection } from '../components/SettingsSection'
 import { ThemeControl } from '../components/ThemeControl'
 import { Surface } from '../components/Surface'
@@ -63,9 +63,8 @@ export function SettingsScreen() {
 
     <SettingsSection title="About"><AboutPanel/></SettingsSection>
 
-    {clearOpen && <Modal title="Clear saved puzzles?" description="This permanently removes all saved puzzle records from this device. Your theme preference, current unsaved puzzle, and scanner session stay unchanged." onClose={closeClearModal}>
+    {clearOpen && <ConfirmationDialog title="Clear saved puzzles?" description="This permanently removes all saved puzzle records from this device. Your theme preference, current unsaved puzzle, and scanner session stay unchanged." confirmLabel={clearing ? 'Clearing...' : 'Clear saved puzzles'} confirmDisabled={clearing} onCancel={closeClearModal} onConfirm={() => { void clearSavedPuzzles() }}>
       {clearError && <p className="settings-modal-error" role="alert">{clearError}</p>}
-      <div className="modal-actions"><Button variant="secondary" disabled={clearing} onClick={closeClearModal}>Cancel</Button><Button variant="danger" disabled={clearing} onClick={() => { void clearSavedPuzzles() }}>{clearing ? 'Clearing...' : 'Clear saved puzzles'}</Button></div>
-    </Modal>}
+    </ConfirmationDialog>}
   </section>
 }

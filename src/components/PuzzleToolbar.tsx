@@ -1,4 +1,5 @@
 import { Button } from './Button'
+import { MoreIcon } from './AppIcon'
 import { IconButton } from './IconButton'
 
 export type PuzzleToolbarProps = {
@@ -14,14 +15,6 @@ export type PuzzleToolbarProps = {
   onRedo: () => void
   onToggleNotes: () => void
   onUndo: () => void
-}
-
-function MoreIcon() {
-  return <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-    <circle cx="5" cy="12" r="1.6" fill="currentColor"/>
-    <circle cx="12" cy="12" r="1.6" fill="currentColor"/>
-    <circle cx="19" cy="12" r="1.6" fill="currentColor"/>
-  </svg>
 }
 
 /** Solver effects stay in the screen; this component only renders actions. */

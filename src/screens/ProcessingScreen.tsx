@@ -4,12 +4,18 @@ import { Button } from '../components/Button'
 import { ProcessingStatus } from '../components/ProcessingStatus'
 import { ScanRecoveryActions } from '../components/ScanRecoveryActions'
 import { Surface } from '../components/Surface'
+import { TaskHeader } from '../components/TaskHeader'
 import { scanFile } from '../scanner/client'
 import { scannerSession } from '../scanner/session'
 
 const recoveryMessage = 'We could not read this puzzle image. Try another clear photo, or enter the clues manually.'
 
-export function ProcessingScreen() {
+type ProcessingScreenProps = {
+  scan?: typeof scanFile
+}
+
+/** `scan` is an internal dependency-injection seam for deterministic UI tests. */
+export function ProcessingScreen({ scan = scanFile }: ProcessingScreenProps) {
   const navigate = useNavigate()
   const failureRef = useRef<HTMLDivElement>(null)
   const [attempt, setAttempt] = useState(0)
@@ -27,7 +33,7 @@ export function ProcessingScreen() {
     scannerSession.clearError()
     setFailed(false)
 
-    scanFile(file, controller.signal).then((result) => {
+    scan(file, controller.signal).then((result) => {
       if (!active || controller.signal.aborted) return
       scannerSession.setResult(result)
       scannerSession.clearError()
@@ -42,7 +48,7 @@ export function ProcessingScreen() {
       active = false
       controller.abort()
     }
-  }, [attempt, file, navigate])
+  }, [attempt, file, navigate, scan])
 
   useEffect(() => { if (failed) failureRef.current?.focus() }, [failed])
 
@@ -53,7 +59,8 @@ export function ProcessingScreen() {
     navigate('/manual')
   }
 
-  return <section className="processing" aria-labelledby="processing-title">
+  return <section className="processing" aria-label="Process puzzle image">
+    <TaskHeader eyebrow="Scan a puzzle" title="Processing image" description="Your image stays on this device while SudoCoach reads the grid." backAction={{ label: 'Back to camera', onClick: () => navigate('/camera') }}/>
     {failed
       ? <div ref={failureRef} role="alert" tabIndex={-1}><Surface className="processing-failure" elevation="raised"><p className="eyebrow">Scan needs another look</p><h1 id="processing-title">We could not read this image</h1><p>{recoveryMessage}</p><ScanRecoveryActions onRetry={() => setAttempt((value) => value + 1)} onChooseAnother={() => navigate('/camera')} onEnterManually={enterManually}/></Surface></div>
       : <><ProcessingStatus fileName={file.name} previewUrl={scannerSession.preview()}/><Button variant="ghost" className="processing-cancel" onClick={() => navigate('/camera')}>Cancel and return to camera</Button></>}

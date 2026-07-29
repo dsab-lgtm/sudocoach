@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { BrandLogo } from '../components/BrandLogo'
+import { CameraIcon } from '../components/AppIcon'
 import { Button } from '../components/Button'
 import { CameraGuide } from '../components/CameraGuide'
-import { IconButton } from '../components/IconButton'
 import { StatusBadge } from '../components/StatusBadge'
 import { Surface } from '../components/Surface'
+import { TaskHeader } from '../components/TaskHeader'
 import { scannerSession } from '../scanner/session'
 
 const cameraError = (error: unknown) => {
@@ -13,14 +13,6 @@ const cameraError = (error: unknown) => {
   if (name === 'NotAllowedError') return 'Camera permission was denied. Allow it in your browser settings, or choose an image instead.'
   if (name === 'NotFoundError') return 'No camera is available on this device. Choose an image instead.'
   return 'The camera could not start. Choose an image instead.'
-}
-
-function BackIcon() {
-  return <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m14 5-7 7 7 7M7 12h12" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8"/></svg>
-}
-
-function CameraIcon() {
-  return <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 8h4l1.5-2h5L16 8h4v11H4zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8"/></svg>
 }
 
 export function CameraScreen() {
@@ -98,10 +90,7 @@ export function CameraScreen() {
   }
 
   return <section className="camera-screen" aria-labelledby="camera-title">
-    <header className="camera-heading">
-      <div className="camera-heading__title"><span aria-hidden="true"><BrandLogo variant="compact"/></span><div><p className="eyebrow">Scan a puzzle</p><h1 id="camera-title">Capture the whole grid</h1><p>Take a photo or choose one you already have. Images stay on this device and are processed locally.</p></div></div>
-      <IconButton label="Back to home" onClick={() => navigate('/')}><BackIcon/></IconButton>
-    </header>
+    <header><TaskHeader eyebrow="Scan a puzzle" title="Capture the whole grid" titleId="camera-title" description="Take a photo or choose one you already have. Images stay on this device and are processed locally." backAction={{ label: 'Back to home', onClick: () => navigate('/') }}/></header>
     <div className="camera-layout">
       <Surface className="camera-capture" elevation="raised">
         <div className={`camera-view ${ready ? 'camera-view--ready' : ''}`}>

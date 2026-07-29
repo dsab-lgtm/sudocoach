@@ -26,24 +26,24 @@ describe('Modal', () => {
     expect(last).toHaveFocus()
   })
 
-  it('closes on Escape and restores focus and body scroll', () => {
+  it('closes on Escape and restores focus', () => {
     render(<ModalHarness/>)
     const trigger = screen.getByRole('button', { name: 'Open dialog' })
     trigger.focus()
     fireEvent.click(trigger)
-    expect(document.body.style.overflow).toBe('hidden')
+    expect(document.body).toHaveAttribute('data-scroll-locked')
     fireEvent.keyDown(screen.getByRole('button', { name: 'First action' }), { key: 'Escape' })
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     expect(trigger).toHaveFocus()
-    expect(document.body.style.overflow).toBe('')
+    expect(document.body).not.toHaveAttribute('data-scroll-locked')
   })
 
   it('closes only when the backdrop itself is pressed', () => {
     render(<ModalHarness/>)
     fireEvent.click(screen.getByRole('button', { name: 'Open dialog' }))
-    fireEvent.mouseDown(screen.getByRole('dialog', { name: 'Dialog title' }))
+    fireEvent.pointerDown(screen.getByRole('dialog', { name: 'Dialog title' }))
     expect(screen.getByRole('dialog')).toBeInTheDocument()
-    fireEvent.mouseDown(screen.getByRole('presentation'))
+    fireEvent.pointerDown(document.querySelector('.ui-modal-backdrop')!)
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 })

@@ -8,6 +8,8 @@ function renderShell(initialEntries: string[]) {
   return render(<TestRouter initialEntries={initialEntries}><AppShell><Routes>
     <Route path="/" element={<h1>Home route</h1>}/>
     <Route path="/settings" element={<h1>Settings route</h1>}/>
+    <Route path="/camera" element={<h1>Camera route</h1>}/>
+    <Route path="/practice/naked-single/example" element={<h1>Practice session route</h1>}/>
     <Route path="/solve" element={<h1>Solver route</h1>}/>
     <Route path="/training/annotate" element={<h1>Training route</h1>}/>
   </Routes></AppShell></TestRouter>)
@@ -35,6 +37,13 @@ describe('AppShell', () => {
   it('omits the global top bar on puzzle routes', () => {
     renderShell(['/solve'])
     expect(screen.getByRole('main')).toHaveClass('app-shell--puzzle')
+    expect(screen.queryByRole('navigation', { name: 'Primary navigation' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'SudoCoach home' })).not.toBeInTheDocument()
+  })
+
+  it.each(['/camera', '/practice/naked-single/example'])('uses task chrome without global navigation on %s', (path) => {
+    renderShell([path])
+    expect(screen.getByRole('main')).toHaveClass('app-shell--task')
     expect(screen.queryByRole('navigation', { name: 'Primary navigation' })).not.toBeInTheDocument()
     expect(screen.queryByRole('link', { name: 'SudoCoach home' })).not.toBeInTheDocument()
   })

@@ -1,4 +1,5 @@
 import { IconButton } from './IconButton'
+import { CloseIcon } from './AppIcon'
 import { Modal } from './Modal'
 import type { SourceRegion } from '../scanner/types'
 
@@ -7,12 +8,6 @@ type PhotoComparisonSheetProps = {
   previewUrl: string
   selectedRegion?: SourceRegion
   selectedLabel?: string
-}
-
-function CloseIcon() {
-  return <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-    <path d="m7 7 10 10M17 7 7 17" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="1.9"/>
-  </svg>
 }
 
 /** Keeps scan-photo presentation specialized while reusing modal focus behavior. */
