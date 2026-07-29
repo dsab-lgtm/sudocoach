@@ -14,6 +14,14 @@ npm run dev
 `npm run build`, `npm test`, and `npm run lint` provide the production verification
 baseline. Pushing `main` deploys the built static site to GitHub Pages.
 
+## Visual regression baselines
+
+UI screenshots are canonical on Ubuntu CI. To refresh them, run the **Capture visual
+baselines** GitHub Actions workflow, download its `ui-regression-linux-baselines`
+artifact into `e2e/ui-regression.spec.ts-snapshots/`, and commit the `*-linux.png`
+files with the visual change. macOS runs retain accessibility and interaction E2E
+coverage, while image comparisons run only on Linux.
+
 ## Recognition model
 
 The scanner includes local grid detection, cell cleanup, confidence display, and an

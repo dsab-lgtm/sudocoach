@@ -32,20 +32,24 @@ test.beforeEach(({ page: unusedPage }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-320', 'This suite supplies its own target viewports.')
 })
 
-for (const viewport of viewports) {
-  for (const screen of screens) {
-    test(`${screen.name} is stable at ${viewport.width}px`, async ({ page }) => {
-      await prepare(page)
-      await page.setViewportSize(viewport)
-      await page.goto(screen.url)
-      if (screen.waitFor === 'alert') await expect(page.getByRole('alert')).toBeVisible()
-      if (screen.waitFor === 'grid') await expect(page.getByRole('grid', { name: 'Sudoku puzzle' })).toBeVisible()
-      await expect(page.locator('.app-shell')).toBeVisible()
-      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewport.width)
-      await expect(page).toHaveScreenshot(`${screen.name}-${viewport.width}.png`, { animations: 'disabled', fullPage: true })
-    })
+test.describe('Linux visual baselines', () => {
+  test.skip(process.platform !== 'linux', 'Visual baselines are captured and compared in Ubuntu CI.')
+
+  for (const viewport of viewports) {
+    for (const screen of screens) {
+      test(`${screen.name} is stable at ${viewport.width}px`, async ({ page }) => {
+        await prepare(page)
+        await page.setViewportSize(viewport)
+        await page.goto(screen.url)
+        if (screen.waitFor === 'alert') await expect(page.getByRole('alert')).toBeVisible()
+        if (screen.waitFor === 'grid') await expect(page.getByRole('grid', { name: 'Sudoku puzzle' })).toBeVisible()
+        await expect(page.locator('.app-shell')).toBeVisible()
+        expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewport.width)
+        await expect(page).toHaveScreenshot(`${screen.name}-${viewport.width}.png`, { animations: 'disabled', fullPage: true })
+      })
+    }
   }
-}
+})
 
 for (const screen of screens) {
   test(`${screen.name} has no serious accessibility violations`, async ({ page }) => {
