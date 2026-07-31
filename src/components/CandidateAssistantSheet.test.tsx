@@ -10,4 +10,22 @@ describe('CandidateAssistantSheet', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Remove 2 stale notes' }))
     expect(cleanup).toHaveBeenCalledOnce()
   })
+
+  it('routes guided candidates to recovery when a value blocks safe guidance', () => {
+    const recover = vi.fn()
+    render(<CandidateAssistantSheet
+      mode="guided"
+      staleCount={0}
+      step={null}
+      outcome={{ kind: 'recovery', diagnosis: { kind: 'earlier-mistake', cells: [{ row: 0, col: 2 }], primaryCell: { row: 0, col: 2 }, message: 'An earlier entered value is inconsistent with the verified solution.', solutionStatus: 'unique' } }}
+      onClose={vi.fn()}
+      onMode={vi.fn()}
+      onCleanup={vi.fn()}
+      onApplyStep={vi.fn()}
+      onRecover={recover}
+    />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Review blocking value' }))
+    expect(recover).toHaveBeenCalledOnce()
+  })
 })

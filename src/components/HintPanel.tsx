@@ -1,4 +1,5 @@
 import { DIGITS, type HintConstraint, type SolverStep, type UnitKind } from '../engine/types'
+import type { HintOutcome } from '../engine/hintEngine'
 import { Button } from './Button'
 
 const unitName = (kind: UnitKind, index: number) => kind === 'box' ? `Box ${index + 1}` : `${kind[0].toUpperCase()}${kind.slice(1)} ${index + 1}`
@@ -14,8 +15,10 @@ const firstPrompt = (step: SolverStep) => {
   return 'Check where the highlighted candidate is confined in the row or column.'
 }
 
-export function HintPanel({ step, level, onLevel, onApply }: { step: SolverStep | null; level: number; onLevel: (level: number) => void; onApply: () => void }) {
-  if (!step) return <aside className="hint-panel"><strong>No logical move found</strong><p>Try checking candidate notes or reveal the full solution.</p></aside>
+export function HintPanel({ outcome, level, onLevel, onApply }: { outcome: Exclude<HintOutcome, { kind: 'recovery' }>; level: number; onLevel: (level: number) => void; onApply: () => void }) {
+  if (outcome.kind === 'complete') return <aside className="hint-panel"><strong>Puzzle complete</strong><p>Every cell is filled. Take a moment to review the finished board.</p></aside>
+  if (outcome.kind === 'technique-limit') return <aside className="hint-panel"><strong>No supported logical move found</strong><p>Your current values are consistent. This coach can explain singles, naked pairs, and locked candidates; use Check or reveal the solution when you are ready.</p></aside>
+  const { step } = outcome
   const title = step.technique.replaceAll('-', ' ')
   return <aside className="hint-panel">
     <p className="eyebrow">Hint · {title}</p>

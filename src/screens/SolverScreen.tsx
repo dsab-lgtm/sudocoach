@@ -15,7 +15,7 @@ import { SudokuBoard } from '../components/SudokuBoard'
 import { boardValues } from '../engine/board'
 import { auditManualNotes, effectiveCandidates, getCandidateState } from '../engine/candidates'
 import { analyzeSolutions } from '../engine/fullSolver'
-import { getNextLogicalStep } from '../engine/logicalSolver'
+import { getHintOutcome, type HintOutcome } from '../engine/hintEngine'
 import { diagnoseMistake, type MistakeDiagnosis } from '../engine/mistakeDiagnosis'
 import { useCandidateAssistant } from '../components/candidateAssistantContext'
 import { useFeedback } from '../components/feedbackContext'
@@ -34,8 +34,10 @@ export function SolverScreen() {
   const [notes, setNotes] = useState(false)
   const [hintLevel, setHintLevel] = useState(0)
   const [showHint, setShowHint] = useState(false)
+  const [activeHintOutcome, setActiveHintOutcome] = useState<HintOutcome | null>(null)
   const [showMore, setShowMore] = useState(false)
   const [showCandidates, setShowCandidates] = useState(false)
+  const [candidateOutcome, setCandidateOutcome] = useState<HintOutcome | null>(null)
   const [diagnosis, setDiagnosis] = useState<MistakeDiagnosis | null>(null)
   const [showReveal, setShowReveal] = useState(false)
   const [checkStatus, setCheckStatus] = useState<string | null>(null)
@@ -64,8 +66,10 @@ export function SolverScreen() {
     setBoardFeedback({ id: ++feedbackSequence.current, kind, cells, digits })
   }
   const effectiveCandidateMap = useMemo(() => effectiveCandidates(getCandidateState(boardValues(board), board)), [board])
-  const step = useMemo(() => hintLevel || candidateMode === 'guided' ? getNextLogicalStep(boardValues(board), effectiveCandidateMap) : null, [board, candidateMode, effectiveCandidateMap, hintLevel])
-  const puzzle = usePuzzleBoardController({ notesMode: notes, candidateMode, hintStep: showHint ? step : null, feedback: boardFeedback, onFeedback: triggerBoardFeedback })
+  const calculateHintOutcome = () => getHintOutcome({ board, original, solution, solutionStatus, candidateMap: effectiveCandidateMap })
+  const activeHintStep = activeHintOutcome?.kind === 'step' ? activeHintOutcome.step : null
+  const candidateStep = candidateOutcome?.kind === 'step' ? candidateOutcome.step : null
+  const puzzle = usePuzzleBoardController({ notesMode: notes, candidateMode, hintStep: showHint ? activeHintStep : null, feedback: boardFeedback, onFeedback: triggerBoardFeedback })
   const staleCount = useMemo(() => auditManualNotes(boardValues(board), board).reduce((count, item) => count + item.stale.length, 0), [board])
 
   useEffect(() => {
@@ -84,15 +88,15 @@ export function SolverScreen() {
   useEffect(() => { setCheckStatus(null) }, [board])
 
   useEffect(() => {
-    if (!showHint || !step) {
+    if (!showHint || !activeHintStep) {
       lastHintFeedback.current = null
       return
     }
-    const key = `${hintLevel}:${step.action}:${step.targetCells.map(({ row, col }) => `${row}:${col}`).join(',')}`
+    const key = `${hintLevel}:${activeHintStep.action}:${activeHintStep.targetCells.map(({ row, col }) => `${row}:${col}`).join(',')}`
     if (lastHintFeedback.current === key) return
     lastHintFeedback.current = key
-    setBoardFeedback({ id: ++feedbackSequence.current, kind: 'guided-change', cells: step.targetCells, digits: step.removedCandidates ?? (step.value ? [step.value] : []) })
-  }, [hintLevel, showHint, step])
+    setBoardFeedback({ id: ++feedbackSequence.current, kind: 'guided-change', cells: activeHintStep.targetCells, digits: activeHintStep.removedCandidates ?? (activeHintStep.value ? [activeHintStep.value] : []) })
+  }, [activeHintStep, hintLevel, showHint])
 
   const reveal = () => {
     revealSolution()
@@ -103,8 +107,27 @@ export function SolverScreen() {
     setHintLevel(0)
   }
   const openHint = () => {
+    const outcome = calculateHintOutcome()
+    if (outcome.kind === 'recovery') {
+      setDiagnosis(outcome.diagnosis)
+      triggerBoardFeedback('diagnosis', outcome.diagnosis.cells)
+      return
+    }
+    setActiveHintOutcome(outcome)
     setHintLevel((level) => level || 1)
     setShowHint(true)
+  }
+  const closeHint = () => {
+    setShowHint(false)
+    setActiveHintOutcome(null)
+  }
+  const openCandidates = () => {
+    setCandidateOutcome(candidateMode === 'guided' ? calculateHintOutcome() : null)
+    setShowCandidates(true)
+  }
+  const closeCandidates = () => {
+    setShowCandidates(false)
+    setCandidateOutcome(null)
   }
   const runCheck = () => {
     const result = diagnoseMistake({ board, original, selected, solution, solutionStatus })
@@ -135,33 +158,50 @@ export function SolverScreen() {
       board={<SudokuBoard presentation={puzzle.presentation} interactions={{ ...puzzle.boardInteractions, onToggleNotes: () => setNotes(!notes) }} notesMode={notes} showCandidates={candidateMode !== 'manual'}/>}
       dock={<div className="solver-dock">
         <NumberPad notesMode={notes} disabled={puzzle.isKeypadDisabled} allowedActions={puzzle.allowedActions} {...puzzle.numberPadInteractions} onToggleNotes={() => setNotes(!notes)} showNotesToggle={false}/>
-        <PuzzleToolbar canErase={puzzle.allowedActions.canErase} canRedo={Boolean(redoCount)} canUndo={Boolean(undoCount)} notesMode={notes} onCandidates={() => setShowCandidates(true)} onCheck={runCheck} onErase={puzzle.numberPadInteractions.onErase} onHint={openHint} onMore={() => setShowMore(true)} onRedo={redoWithFeedback} onToggleNotes={() => setNotes(!notes)} onUndo={undoWithFeedback}/>
+        <PuzzleToolbar canErase={puzzle.allowedActions.canErase} canRedo={Boolean(redoCount)} canUndo={Boolean(undoCount)} notesMode={notes} onCandidates={openCandidates} onCheck={runCheck} onErase={puzzle.numberPadInteractions.onErase} onHint={openHint} onMore={() => setShowMore(true)} onRedo={redoWithFeedback} onToggleNotes={() => setNotes(!notes)} onUndo={undoWithFeedback}/>
       </div>}
     />
-    {showHint && <Modal eyebrow="SudoCoach" title="Hint" description="Reveal one focused clue at a time." onClose={() => setShowHint(false)}>
-      <HintPanel step={step} level={hintLevel} onLevel={setHintLevel} onApply={() => { if (step) { applyStep(step); triggerBoardFeedback('guided-change', step.targetCells, step.removedCandidates ?? (step.value ? [step.value] : [])) }; setHintLevel(0); setShowHint(false) }}/>
-      <div className="modal-actions"><Button variant="ghost" onClick={() => setShowHint(false)}>Close hint</Button></div>
+    {showHint && activeHintOutcome && <Modal eyebrow="SudoCoach" title="Hint" description="Reveal one focused clue at a time." onClose={closeHint}>
+      {activeHintOutcome.kind !== 'recovery' && <HintPanel outcome={activeHintOutcome} level={hintLevel} onLevel={setHintLevel} onApply={() => {
+        if (activeHintStep) {
+          applyStep(activeHintStep)
+          triggerBoardFeedback('guided-change', activeHintStep.targetCells, activeHintStep.removedCandidates ?? (activeHintStep.value ? [activeHintStep.value] : []))
+        }
+        setHintLevel(0)
+        closeHint()
+      }}/>}
+      <div className="modal-actions"><Button variant="ghost" onClick={closeHint}>Close hint</Button></div>
     </Modal>}
     {showCandidates && <CandidateAssistantSheet
       mode={candidateMode}
       staleCount={staleCount}
-      step={step}
-      onClose={() => setShowCandidates(false)}
-      onMode={(mode) => { void setMode(mode) }}
+      step={candidateStep}
+      outcome={candidateOutcome ?? undefined}
+      onClose={closeCandidates}
+      onMode={(mode) => {
+        void setMode(mode)
+        setCandidateOutcome(mode === 'guided' ? calculateHintOutcome() : null)
+      }}
+      onRecover={() => {
+        if (candidateOutcome?.kind !== 'recovery') return
+        setDiagnosis(candidateOutcome.diagnosis)
+        triggerBoardFeedback('diagnosis', candidateOutcome.diagnosis.cells)
+        closeCandidates()
+      }}
       onCleanup={() => {
         const stale = auditManualNotes(boardValues(board), board)
         const count = cleanupManualNotes()
         triggerBoardFeedback('candidate-removed', stale.map((item) => item.position).slice(0, 3))
         setCheckStatus(`${count} stale ${count === 1 ? 'note was' : 'notes were'} removed.`)
         announce({ message: `${count} stale ${count === 1 ? 'note was' : 'notes were'} removed.`, tone: 'success' })
-        setShowCandidates(false)
+        closeCandidates()
       }}
       onApplyStep={() => {
-        if (step) {
-          applyStep(step)
-          triggerBoardFeedback('guided-change', step.targetCells, step.removedCandidates ?? (step.value ? [step.value] : []))
+        if (candidateStep) {
+          applyStep(candidateStep)
+          triggerBoardFeedback('guided-change', candidateStep.targetCells, candidateStep.removedCandidates ?? (candidateStep.value ? [candidateStep.value] : []))
         }
-        setShowCandidates(false)
+        closeCandidates()
       }}
     />}
     {diagnosis && <MistakeDiagnosisSheet

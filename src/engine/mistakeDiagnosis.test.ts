@@ -1,5 +1,5 @@
 import { createBoard, emptyGrid, gridFromString } from './board'
-import { solve } from './fullSolver'
+import { analyzeSolutions, solve } from './fullSolver'
 import { diagnoseMistake } from './mistakeDiagnosis'
 import { describe, expect, it } from 'vitest'
 
@@ -50,5 +50,13 @@ describe('mistake diagnosis', () => {
     const board = createBoard(emptyGrid())
     board[0][0].value = 1
     expect(diagnoseMistake({ board, original: emptyGrid(), solution: emptyGrid(), solutionStatus: 'ambiguous' }).kind).toBe('clear')
+  })
+
+  it('accepts cached source analysis when checking a board', () => {
+    const sourceAnalysis = analyzeSolutions(puzzle)
+    const board = createBoard(puzzle)
+    board[0][2] = { ...board[0][2], value: 1, origin: 'manual' }
+
+    expect(diagnoseMistake({ board, original: puzzle, solution: sourceAnalysis.solution, solutionStatus: sourceAnalysis.status, sourceAnalysis }).kind).toBe('earlier-mistake')
   })
 })

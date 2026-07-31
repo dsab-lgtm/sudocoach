@@ -1,9 +1,11 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { emptyGrid, gridFromString } from '../engine/board'
+import { getNextLogicalStep } from '../engine/logicalSolver'
 import type { PuzzleRecord } from '../storage/database'
 import { usePuzzleStore } from '../store/puzzleStore'
 import { TestRouter } from '../test/TestRouter'
+import { boxLineReductionDrill } from '../test/fixtures/hintGameCorpus'
 import { SolverScreen } from './SolverScreen'
 
 const nearlyComplete = gridFromString(`
@@ -16,6 +18,18 @@ const nearlyComplete = gridFromString(`
 961537284
 287419635
 345286179
+`)
+
+const hintPuzzle = gridFromString(`
+53..7....
+6..195...
+.98....6.
+8...6...3
+4..8.3..1
+7...2...6
+.6....28.
+...419..5
+....8..79
 `)
 
 const renderSolver = () => render(<TestRouter><SolverScreen /></TestRouter>)
@@ -131,6 +145,44 @@ describe('SolverScreen puzzle behavior', () => {
     expect(cell(1, 1)).toHaveAccessibleName('Row 1, column 1, empty, editable')
     fireEvent.click(screen.getByRole('button', { name: 'Redo' }))
     expect(cell(1, 1)).toHaveAccessibleName('Row 1, column 1: 5, editable')
+  })
+
+  it('pauses hinting and opens recovery when a legal-looking value is wrong', () => {
+    act(() => {
+      usePuzzleStore.getState().setPuzzle(hintPuzzle)
+      usePuzzleStore.getState().setValue({ row: 0, col: 2 }, 1)
+    })
+    renderSolver()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Hint' }))
+
+    expect(screen.queryByRole('dialog', { name: 'Hint' })).not.toBeInTheDocument()
+    const diagnosis = screen.getByRole('dialog', { name: 'An earlier value needs attention' })
+    expect(diagnosis).toHaveTextContent('inconsistent with the verified solution')
+    expect(within(diagnosis).getByRole('button', { name: 'Clear highlighted value' })).toBeInTheDocument()
+    expect(document.querySelector('.board-cell.has-feedback--diagnosis')).toHaveAttribute('aria-label', 'Row 1, column 3: 1, editable')
+  })
+
+  it('states when the puzzle is complete instead of requesting another move', () => {
+    act(() => { usePuzzleStore.getState().setPuzzle(nearlyComplete); usePuzzleStore.getState().setValue({ row: 0, col: 0 }, 5) })
+    renderSolver()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Hint' }))
+
+    expect(screen.getByRole('dialog', { name: 'Hint' })).toHaveTextContent('Puzzle complete')
+    expect(screen.queryByRole('button', { name: /Apply/ })).not.toBeInTheDocument()
+  })
+
+  it('explains when the supported techniques have reached their limit', () => {
+    const firstStep = getNextLogicalStep(boxLineReductionDrill.grid)
+    if (!firstStep) throw new Error('Expected a box-line reduction step.')
+    act(() => { usePuzzleStore.getState().setPuzzle(boxLineReductionDrill.grid); usePuzzleStore.getState().applyStep(firstStep) })
+    renderSolver()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Hint' }))
+
+    expect(screen.getByRole('dialog', { name: 'Hint' })).toHaveTextContent('No supported logical move found')
+    expect(screen.getByText(/current values are consistent/)).toBeInTheDocument()
   })
 
   it('closes the focused hint sheet and restores focus to its trigger', () => {

@@ -7,6 +7,10 @@ const eliminationStep: SolverStep = {
   technique: 'naked-pair', action: 'remove-candidate', targetCells: [{ row: 0, col: 2 }], supportingCells: [{ row: 0, col: 0 }, { row: 0, col: 1 }], focusUnits: [{ kind: 'row', index: 0 }], removedCandidates: [1, 2], explanation: 'Test elimination.'
 }
 
+const placementStep: SolverStep = {
+  technique: 'naked-single', action: 'place-number', targetCells: [{ row: 1, col: 1 }], supportingCells: [], focusUnits: [{ kind: 'row', index: 1 }], value: 3, explanation: 'Test placement.'
+}
+
 describe('puzzleStore hint application', () => {
   it('records an elimination hint without changing any board values', () => {
     usePuzzleStore.getState().setPuzzle(emptyGrid())
@@ -37,5 +41,17 @@ describe('puzzleStore hint application', () => {
     expect(usePuzzleStore.getState().board[0][2].assistantExcluded).toEqual([1, 2])
     usePuzzleStore.getState().undoMove()
     expect(usePuzzleStore.getState().board[0][2].assistantExcluded).toEqual([])
+  })
+
+  it('keeps guided eliminations through assistant placements and resets them only after a manual edit', () => {
+    usePuzzleStore.getState().setPuzzle(emptyGrid())
+    usePuzzleStore.getState().applyStep(eliminationStep)
+    usePuzzleStore.getState().applyStep(placementStep)
+    expect(usePuzzleStore.getState().board[0][2].assistantExcluded).toEqual([1, 2])
+
+    usePuzzleStore.getState().setValue({ row: 2, col: 2 }, 4)
+    expect(usePuzzleStore.getState().board[0][2].assistantExcluded).toEqual([])
+    usePuzzleStore.getState().undoMove()
+    expect(usePuzzleStore.getState().board[0][2].assistantExcluded).toEqual([1, 2])
   })
 })

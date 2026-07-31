@@ -55,7 +55,9 @@ export const usePuzzleStore = create<PuzzleState>((set, get) => ({
   setValue: (position, value, origin = 'manual') => set((state) => {
     const cell = state.board[position.row][position.col]
     if (cell.given || cell.value === value) return state
-    const board = withoutAssistantExclusions(cloneBoard(state.board))
+    // A player edit can invalidate an earlier candidate proof, while a coach
+    // placement is monotonic and may safely continue the guided chain.
+    const board = origin === 'manual' ? withoutAssistantExclusions(cloneBoard(state.board)) : cloneBoard(state.board)
     const nextSequence = value && origin === 'manual' ? state.valueEntrySequence + 1 : state.valueEntrySequence
     board[position.row][position.col] = {
       ...cell,
@@ -85,7 +87,7 @@ export const usePuzzleStore = create<PuzzleState>((set, get) => ({
     if (!step.value || step.targetCells.length !== 1) return { hintHistory: [...state.hintHistory, step] }
     const position = step.targetCells[0]
     if (state.board[position.row][position.col].given) return state
-    const board = withoutAssistantExclusions(cloneBoard(state.board))
+    const board = cloneBoard(state.board)
     board[position.row][position.col] = { ...board[position.row][position.col], value: step.value, notes: [...board[position.row][position.col].notes], assistantExcluded: [], origin: 'hint' }
     return { ...writeHistory(state, board), selected: position, hintHistory: [...state.hintHistory, step] }
   }),

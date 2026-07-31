@@ -1,6 +1,6 @@
 import { boardGivens, boardValues } from './board'
 import { getCandidates } from './candidates'
-import { analyzeSolutions } from './fullSolver'
+import { analyzeSolutions, type SolutionAnalysis } from './fullSolver'
 import type { Board, CellPosition, Grid, SolutionStatus } from './types'
 import { validatePuzzle } from './validatePuzzle'
 
@@ -19,15 +19,16 @@ const cellPositions = (board: Board, predicate: (row: number, col: number) => bo
   board.flatMap((row, rowIndex) => row.flatMap((_, col) => predicate(rowIndex, col) ? [{ row: rowIndex, col }] : []))
 
 /** Uses only validated source and solution facts; ambiguity never yields a mismatch claim. */
-export const diagnoseMistake = ({ board, original = boardGivens(board), selected, solution, solutionStatus = 'unknown' }: {
+export const diagnoseMistake = ({ board, original = boardGivens(board), selected, solution, solutionStatus = 'unknown', sourceAnalysis: cachedSourceAnalysis }: {
   board: Board
   original?: Grid
   selected?: CellPosition | null
   solution?: Grid
   solutionStatus?: SolutionStatus
+  sourceAnalysis?: SolutionAnalysis
 }): MistakeDiagnosis => {
   const sourceValidation = validatePuzzle(original)
-  const sourceAnalysis = analyzeSolutions(original)
+  const sourceAnalysis = cachedSourceAnalysis ?? analyzeSolutions(original)
   if (!sourceValidation.valid || sourceAnalysis.status === 'unsolvable') return {
     kind: 'invalid-source-clue', cells: sourceValidation.conflicts, primaryCell: sourceValidation.conflicts[0],
     message: sourceValidation.valid ? 'The original clues cannot form a valid Sudoku solution.' : 'Some original clues conflict with each other.', solutionStatus: sourceAnalysis.status
